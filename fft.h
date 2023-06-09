@@ -53,7 +53,8 @@ constexpr bool isPowerOf2(unsigned int num)
         return (num & (num - 1)) == 0;
 }
 
-template <size_t N> uint reverse(uint n)
+template <size_t N> 
+constexpr uint reverse(uint n)
 {
     uint retValue {0};
     uint shift = fft_log2(N) - 1;
@@ -72,6 +73,22 @@ template <size_t N> uint reverse(uint n)
     return retValue;
 }
 
+template <size_t N> 
+constexpr std::array<uint, N> calc_lookup()
+{
+    std::array<uint, N> lookupTable {0};
+    for (uint i = 0; i < N; i++) {
+        lookupTable.at(i) = reverse<N>(i);
+    }
+    for (uint i = 1; i < N - 1; i++) {
+        uint i2 = lookupTable.at(i);
+        if (i2 != i) {
+            lookupTable.at(i2) = i2;
+        }
+    }
+    return lookupTable;
+}
+
 template <size_t N>
 void fft(std::array<std::complex<double>, N>& data) {
 
@@ -81,9 +98,10 @@ void fft(std::array<std::complex<double>, N>& data) {
     //compile time calculations
     auto cosines = calc_cosines<N, fft_log2(N)>();
     auto sines = calc_sines<N, fft_log2(N)>();
+    auto lookupTable = calc_lookup<N>();
 
-    for (uint i = 1; i < N / 2; i++) {
-        uint i2 = reverse<N>(i);
+    for (uint i = 1; i < N - 1; i++) {
+        uint i2 = lookupTable.at(i);
         if (i2 != i)
             std::swap(data.at(i), data.at(i2));
     }

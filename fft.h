@@ -134,6 +134,7 @@ constexpr std::array<std::array<double, N>, fft_log2(N)> calc_sines()
     return sines;
 }
 
+//form the W coefficients from the cosines and sines arrays
 template<size_t N>
 constexpr std::array<std::array<std::complex<double>, N>, fft_log2(N)> calc_wCoeffs()
 {
@@ -159,6 +160,7 @@ constexpr bool isPowerOf2(unsigned int num)
         return (num & (num - 1)) == 0;
 }
 
+//reverse the order of bits in the mask of N - 1
 template <size_t N> 
 constexpr uint reverse(uint n)
 {
@@ -180,19 +182,22 @@ constexpr uint reverse(uint n)
 }
 
 template <size_t N> 
-constexpr std::array<uint, N> calc_lookup()
+constexpr std::array<uint, N> calc_swap_lookup()
 {
-    std::array<uint, N> lookupTable {0};
+    //first create an array where every element value is reversed bits of the index
+    std::array<uint, N> swapLookup {0};
     for (uint i = 0; i < N; i++) {
-        lookupTable.at(i) = reverse<N>(i);
+        swapLookup.at(i) = reverse<N>(i);
     }
+    //then go through one more time and for every pair, unreverse the one with the higher index
+    //this prevents the swap from occuring twice, effectively undoing the swap
     for (uint i = 1; i < N - 1; i++) {
-        uint i2 = lookupTable.at(i);
+        uint i2 = swapLookup.at(i);
         if (i2 != i) {
-            lookupTable.at(i2) = i2;
+            swapLookup.at(i2) = i2;
         }
     }
-    return lookupTable;
+    return swapLookup;
 }
 
 template <size_t N>
@@ -201,27 +206,27 @@ void fft(std::array<std::complex<double>, N>& data) {
     static_assert(isPowerOf2(N), "FFT size must be a power of 2!");
 
     //compile time calculations
-    //constexpr auto cosines = calc_cosines<N>();
-    //constexpr auto sines = calc_sines<N>();
     constexpr auto wCoeffs = calc_wCoeffs<N>();
-    constexpr auto lookupTable = calc_lookup<N>();
+    constexpr auto swapLookup = calc_swap_lookup<N>();
 
+    //decimation in time
     for (uint i = 1; i < N - 1; i++) {
-        uint i2 = lookupTable.at(i);
+        uint i2 = swapLookup.at(i);
         if (i2 != i)
             std::swap(data.at(i), data.at(i2));
     }
 
+    //outer most loop is the FFT stages
+    //2pt FFT -> 4pt FFT -> 8pt FFT -> etc
     int i2 = 0;
     for (int i = 1; i < N; i = i << 1) {
 
-        for (int j = 0; j < N; j+=(i<<1)) {
+        //the inside 2 loops perform the butterfly pattern
+        for (int j = 0; j < N; j += (i << 1)) {
 
             for (int k = 0; k < i; k++) {
-                int index1 = j+k;
-                int index2 = j+k+i;
-                //std::complex<double> W = cosines.at(i2).at(index1) + sines.at(i2).at(index1) * 1.0i;
-                //std::complex<double> W2 = cosines.at(i2).at(index2) + sines.at(i2).at(index2) * 1.0i;
+                int index1 = j + k;
+                int index2 = j + k + i;
                 std::complex<double> val1 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index1);
                 std::complex<double> val2 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index2);
                 data.at(index1) = val1;

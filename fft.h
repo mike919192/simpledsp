@@ -2,36 +2,7 @@
 #include <array>
 #include <complex>
 #include <cmath>
-
-#define PI 3.14159265358979323846
-
-//8, 3
-template <size_t N, size_t N2>
-constexpr std::array<std::array<double, N>, N2> calc_cosines()
-{
-    std::array<std::array<double, N>, N2> cosines {0};
-    for (size_t i = 0; i < cosines.size(); i++) {
-        unsigned int pow2 = 1 << i + 1;
-        for (size_t j = 0; j < cosines.at(i).size(); j++) {
-            cosines.at(i).at(j) = std::cos(2 * PI * j / pow2);
-        }
-    }
-    return cosines;
-}
-
-//8, 3
-template <size_t N, size_t N2>
-constexpr std::array<std::array<double, N>, N2> calc_sines()
-{
-    std::array<std::array<double, N>, N2> sines {0};
-    for (size_t i = 0; i < sines.size(); i++) {
-        unsigned int pow2 = 1 << i + 1;
-        for (size_t j = 0; j < sines.at(i).size(); j++) {
-            sines.at(i).at(j) = -std::sin(2 * PI * j / pow2);
-        }
-    }
-    return sines;
-}
+#include "math.h"
 
 //determine highest bit and return its position
 //std method is not constexpr so thats why this was created
@@ -42,6 +13,125 @@ constexpr unsigned int fft_log2(unsigned int num)
         retValue++;
     }
     return retValue;
+}
+
+template <size_t N>
+constexpr std::array<std::array<double, N>, fft_log2(N)> calc_cosines_bad()
+{
+    std::array<std::array<double, N>, fft_log2(N)> cosines {0};
+    for (size_t i = 0; i < cosines.size(); i++) {
+        unsigned int pow2 = 1 << i + 1;
+        for (size_t j = 0; j < cosines.at(i).size(); j++) {
+            cosines.at(i).at(j) = std::cos(2 * M_PI * j / pow2);
+        }
+    }
+    return cosines;
+}
+
+template <size_t N>
+constexpr std::array<std::array<double, N>, fft_log2(N)> calc_cosines()
+{
+    std::array<std::array<double, N>, fft_log2(N)> cosines {0};
+    for (size_t i = 0; i < cosines.size(); i++) {
+        unsigned int pow2 = 1 << i + 1;
+        
+        //first element is always 1
+        cosines.at(i).at(0) = 1.0;
+        uint values90 = 1; //number of values from 0 up to and including 90deg
+
+        //i = 0 is special
+        //just alternate +1 and -1
+        if (i == 0) {
+            for (size_t j = 1; j < cosines.at(i).size(); j++) {
+                cosines.at(i).at(j) = cosines.at(i).at(j-1) * -1.0;
+            }
+        }
+
+        //calculate up to < 90
+        else {
+            uint num = 1 << (i - 1);
+            for (size_t j = 1; j < num; j++) {
+                cosines.at(i).at(j) = std::cos(2 * M_PI * j / pow2);
+            }
+            //next element is 0
+            cosines.at(i).at(num) = 0.0;
+            values90 = num + 1;        
+
+            //now use symmetry to get the rest of the values
+            int dir = -1;
+            double sign = -1.0;
+            uint bouncyIndex = values90 - 1;
+
+            for (size_t j = values90; j < cosines.at(i).size(); j++) {
+                bouncyIndex += dir;
+                cosines.at(i).at(j) = cosines.at(i).at(bouncyIndex) * sign;                
+                if (bouncyIndex == 0) {
+                    dir = 1;
+                } else if (bouncyIndex == values90 - 1) {
+                    dir = -1;
+                    sign *= -1.0;
+                }
+            }
+        }
+    }
+    return cosines;
+}
+
+template <size_t N>
+constexpr std::array<std::array<double, N>, fft_log2(N)> calc_sines_bad()
+{
+    std::array<std::array<double, N>, fft_log2(N)> sines {0};
+    for (size_t i = 0; i < sines.size(); i++) {
+        unsigned int pow2 = 1 << i + 1;
+        for (size_t j = 0; j < sines.at(i).size(); j++) {
+            sines.at(i).at(j) = -std::sin(2 * M_PI * j / pow2);
+        }
+    }
+    return sines;
+}
+
+template <size_t N>
+constexpr std::array<std::array<double, N>, fft_log2(N)> calc_sines()
+{
+    std::array<std::array<double, N>, fft_log2(N)> sines {0};
+    for (size_t i = 0; i < sines.size(); i++) {
+        unsigned int pow2 = 1 << i + 1;
+        
+        //first element is always 0
+        sines.at(i).at(0) = 0.0;
+        uint values90 = 1; //number of values from 0 up to and including 90deg
+
+        //i = 0 is special
+        //all values are 0
+
+        //calculate up to < 90
+        if (i > 0) {
+            uint num = 1 << (i - 1);
+            for (size_t j = 1; j < num; j++) {
+                sines.at(i).at(j) = -std::sin(2 * M_PI * j / pow2);
+            }
+            //next element is -1
+            sines.at(i).at(num) = -1.0;
+            values90 = num + 1;        
+
+            //now use symmetry to get the rest of the values
+            int dir = -1;
+            double sign = 1.0;
+            uint bouncyIndex = values90 - 1;
+
+            for (size_t j = values90; j < sines.at(i).size(); j++) {
+                bouncyIndex += dir;
+                sines.at(i).at(j) = sines.at(i).at(bouncyIndex) * sign;                
+                if (bouncyIndex == 0) {
+                    dir = 1;
+                    sign *= -1.0;
+                } else if (bouncyIndex == values90 - 1) {
+                    dir = -1;                    
+                }
+            }
+        }
+    }
+    return sines;
 }
 
 //determine if num is a power of 2
@@ -96,8 +186,8 @@ void fft(std::array<std::complex<double>, N>& data) {
     using namespace std::complex_literals;
 
     //compile time calculations
-    auto cosines = calc_cosines<N, fft_log2(N)>();
-    auto sines = calc_sines<N, fft_log2(N)>();
+    auto cosines = calc_cosines<N>();
+    auto sines = calc_sines<N>();
     auto lookupTable = calc_lookup<N>();
 
     for (uint i = 1; i < N - 1; i++) {

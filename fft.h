@@ -16,9 +16,15 @@ constexpr uint fft_log2(uint num)
 }
 
 template <size_t N>
-constexpr std::array<std::array<double, N>, fft_log2(N)> calc_cosines_naive()
+using trig_array = std::array<std::array<double, N>, fft_log2(N)>;
+
+template <size_t N>
+using coeff_array = std::array<std::array<std::complex<double>, N>, fft_log2(N)>;
+
+template <size_t N>
+constexpr trig_array<N> calc_cosines_naive()
 {
-    std::array<std::array<double, N>, fft_log2(N)> cosines {0};
+    trig_array<N> cosines {0};
     for (size_t i = 0; i < cosines.size(); i++) {
         uint pow2 = 1 << i + 1;
         for (size_t j = 0; j < cosines.at(i).size(); j++) {
@@ -29,9 +35,9 @@ constexpr std::array<std::array<double, N>, fft_log2(N)> calc_cosines_naive()
 }
 
 template <size_t N>
-constexpr std::array<std::array<double, N>, fft_log2(N)> calc_sines_naive()
+constexpr trig_array<N> calc_sines_naive()
 {
-    std::array<std::array<double, N>, fft_log2(N)> sines {0};
+    trig_array<N> sines {0};
     for (size_t i = 0; i < sines.size(); i++) {
         uint pow2 = 1 << i + 1;
         for (size_t j = 0; j < sines.at(i).size(); j++) {
@@ -68,9 +74,9 @@ class cosine_calculator
 };
 
 template <size_t N, class T>
-constexpr std::array<std::array<double, N>, fft_log2(N)> calc_trigs()
+constexpr trig_array<N> calc_trigs()
 {
-    std::array<std::array<double, N>, fft_log2(N)> values {0};
+    trig_array<N> values {0};
     for (size_t i = 0; i < values.size(); i++) {
         uint pow2 = 1 << (i + 1);
         
@@ -115,11 +121,11 @@ constexpr std::array<std::array<double, N>, fft_log2(N)> calc_trigs()
 
 //form the W coefficients from the cosines and sines arrays
 template<size_t N>
-constexpr std::array<std::array<std::complex<double>, N>, fft_log2(N)> calc_wCoeffs()
+constexpr coeff_array<N> calc_wCoeffs()
 {
     auto cosines = calc_trigs<N, cosine_calculator>();
     auto sines = calc_trigs<N, neg_sine_calculator>();
-    std::array<std::array<std::complex<double>, N>, fft_log2(N)> wCoeffs {0};
+    coeff_array<N> wCoeffs {0};
 
     for (size_t i = 0; i < cosines.size(); i++) {
 

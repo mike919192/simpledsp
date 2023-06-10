@@ -16,7 +16,7 @@ constexpr uint fft_log2(uint num)
 }
 
 template <size_t N>
-constexpr std::array<std::array<double, N>, fft_log2(N)> calc_cosines_bad()
+constexpr std::array<std::array<double, N>, fft_log2(N)> calc_cosines_naive()
 {
     std::array<std::array<double, N>, fft_log2(N)> cosines {0};
     for (size_t i = 0; i < cosines.size(); i++) {
@@ -29,56 +29,7 @@ constexpr std::array<std::array<double, N>, fft_log2(N)> calc_cosines_bad()
 }
 
 template <size_t N>
-constexpr std::array<std::array<double, N>, fft_log2(N)> calc_cosines()
-{
-    std::array<std::array<double, N>, fft_log2(N)> cosines {0};
-    for (size_t i = 0; i < cosines.size(); i++) {
-        uint pow2 = 1 << (i + 1);
-        
-        //first element is always 1
-        cosines.at(i).at(0) = 1.0;
-        uint values90 = 1; //number of values from 0 up to and including 90deg
-
-        //i = 0 is special
-        //just alternate +1 and -1
-        if (i == 0) {
-            for (size_t j = 1; j < cosines.at(i).size(); j++) {
-                cosines.at(i).at(j) = cosines.at(i).at(j-1) * -1.0;
-            }
-        }
-
-        else {
-            //calculate up to but not including 90 deg
-            uint num = 1 << (i - 1);
-            for (size_t j = 1; j < num; j++) {
-                cosines.at(i).at(j) = std::cos(2 * M_PI * j / pow2);
-            }
-            //next element is 0
-            cosines.at(i).at(num) = 0.0;
-            values90 = num + 1;        
-
-            //now use symmetry to get the rest of the values
-            int dir = -1;
-            double sign = -1.0;
-            uint bouncyIndex = values90 - 1;
-
-            for (size_t j = values90; j < cosines.at(i).size(); j++) {
-                bouncyIndex += dir;
-                cosines.at(i).at(j) = cosines.at(i).at(bouncyIndex) * sign;                
-                if (bouncyIndex == 0) {
-                    dir = 1;
-                } else if (bouncyIndex == values90 - 1) {
-                    dir = -1;
-                    sign *= -1.0;
-                }
-            }
-        }
-    }
-    return cosines;
-}
-
-template <size_t N>
-constexpr std::array<std::array<double, N>, fft_log2(N)> calc_sines_bad()
+constexpr std::array<std::array<double, N>, fft_log2(N)> calc_sines_naive()
 {
     std::array<std::array<double, N>, fft_log2(N)> sines {0};
     for (size_t i = 0; i < sines.size(); i++) {
@@ -90,56 +41,84 @@ constexpr std::array<std::array<double, N>, fft_log2(N)> calc_sines_bad()
     return sines;
 }
 
-template <size_t N>
-constexpr std::array<std::array<double, N>, fft_log2(N)> calc_sines()
+class neg_sine_calculator
 {
-    std::array<std::array<double, N>, fft_log2(N)> sines {0};
-    for (size_t i = 0; i < sines.size(); i++) {
+    public:
+    constexpr static double Value0() { return 0.0; }
+    constexpr static double Value90() { return -1.0; }
+    constexpr static double Value(double rad) { return -std::sin(rad); };
+
+    //symmetry sign changes
+    //return either +1 or -1 to indicate sign change
+    constexpr static double Sym0() { return -1.0; }
+    constexpr static double Sym90() { return 1.0; }
+};
+
+class cosine_calculator
+{
+    public:
+    constexpr static double Value0() { return 1.0; }
+    constexpr static double Value90() { return 0.0; }
+    constexpr static double Value(double rad) { return std::cos(rad); };
+
+    //symmetry sign changes
+    //return either +1 or -1 to indicate sign change
+    constexpr static double Sym0() { return 1.0; }
+    constexpr static double Sym90() { return -1.0; }
+};
+
+template <size_t N, class T>
+constexpr std::array<std::array<double, N>, fft_log2(N)> calc_trigs()
+{
+    std::array<std::array<double, N>, fft_log2(N)> values {0};
+    for (size_t i = 0; i < values.size(); i++) {
         uint pow2 = 1 << (i + 1);
         
-        //first element is always 0
-        sines.at(i).at(0) = 0.0;
-        uint values90 = 1; //number of values from 0 up to and including 90deg
+        //first element at 0 deg
+        values.at(i).at(0) = T::Value0();
 
         //i = 0 is special
-        //all values are 0
-
-        if (i > 0) {
-            //calculate up to but not include 90 deg
+        //just alternate +1 and -1
+        if (i == 0) {
+            for (size_t j = 1; j < values.at(i).size(); j++) {
+                values.at(i).at(j) = values.at(i).at(j-1) * -1.0;
+            }
+        } else {
+            //calculate up to but not including 90 deg
             uint num = 1 << (i - 1);
             for (size_t j = 1; j < num; j++) {
-                sines.at(i).at(j) = -std::sin(2 * M_PI * j / pow2);
+                values.at(i).at(j) = T::Value(2 * M_PI * j / pow2);
             }
-            //next element is -1
-            sines.at(i).at(num) = -1.0;
-            values90 = num + 1;        
+            //next element is 90 deg
+            values.at(i).at(num) = T::Value90();    
 
             //now use symmetry to get the rest of the values
             int dir = -1;
-            double sign = 1.0;
-            uint bouncyIndex = values90 - 1;
+            double sign = T::Sym90();
+            uint bouncyIndex = num;
 
-            for (size_t j = values90; j < sines.at(i).size(); j++) {
+            for (size_t j = num + 1; j < values.at(i).size(); j++) {
                 bouncyIndex += dir;
-                sines.at(i).at(j) = sines.at(i).at(bouncyIndex) * sign;                
+                values.at(i).at(j) = values.at(i).at(bouncyIndex) * sign;                
                 if (bouncyIndex == 0) {
                     dir = 1;
-                    sign *= -1.0;
-                } else if (bouncyIndex == values90 - 1) {
-                    dir = -1;                    
+                    sign *= T::Sym0();
+                } else if (bouncyIndex == num) {
+                    dir = -1;
+                    sign *= T::Sym90();
                 }
             }
         }
     }
-    return sines;
+    return values;
 }
 
 //form the W coefficients from the cosines and sines arrays
 template<size_t N>
 constexpr std::array<std::array<std::complex<double>, N>, fft_log2(N)> calc_wCoeffs()
 {
-    auto cosines = calc_cosines<N>();
-    auto sines = calc_sines<N>();
+    auto cosines = calc_trigs<N, cosine_calculator>();
+    auto sines = calc_trigs<N, neg_sine_calculator>();
     std::array<std::array<std::complex<double>, N>, fft_log2(N)> wCoeffs {0};
 
     for (size_t i = 0; i < cosines.size(); i++) {
@@ -229,6 +208,7 @@ void fft(std::array<std::complex<double>, N>& data) {
                 uint index1 = j + k;
                 uint index2 = j + k + i;
 
+                //original formula page 137
                 //std::complex<double> val1 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index1);
                 //std::complex<double> val2 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index2);
 

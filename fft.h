@@ -210,6 +210,7 @@ void fft(std::array<std::complex<double>, N>& data) {
     constexpr auto swapLookup = calc_swap_lookup<N>();
 
     //decimation in time
+    //perform swap on inputs
     for (uint i = 1; i < N - 1; i++) {
         uint i2 = swapLookup.at(i);
         if (i2 != i)
@@ -227,8 +228,15 @@ void fft(std::array<std::complex<double>, N>& data) {
             for (uint k = 0; k < i; k++) {
                 uint index1 = j + k;
                 uint index2 = j + k + i;
-                std::complex<double> val1 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index1);
-                std::complex<double> val2 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index2);
+
+                //std::complex<double> val1 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index1);
+                //std::complex<double> val2 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index2);
+
+                //optimization from page 145
+                std::complex<double> temp = data.at(index2) * wCoeffs.at(i2).at(index1);
+                std::complex<double> val1 = data.at(index1) + temp;
+                std::complex<double> val2 = data.at(index1) - temp;
+
                 data.at(index1) = val1;
                 data.at(index2) = val2;
             }

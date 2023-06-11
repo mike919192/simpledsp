@@ -3,6 +3,7 @@
 #include <complex>
 #include <cmath>
 #include "math.h"
+#include <algorithm>
 
 //determine highest bit and return its position
 //std method is not constexpr so thats why this was created
@@ -20,6 +21,9 @@ using trig_array = std::array<std::array<double, N>, fft_log2(N)>;
 
 template <size_t N>
 using coeff_array = std::array<std::array<std::complex<double>, N>, fft_log2(N)>;
+
+// template <size_t N>
+// using complex_data = std::array<std::complex<double>, N>;
 
 template <size_t N>
 constexpr trig_array<N> calc_cosines_naive()
@@ -47,12 +51,12 @@ constexpr trig_array<N> calc_sines_naive()
     return sines;
 }
 
-class neg_sine_calculator
+class sine_calculator
 {
     public:
     constexpr static double Value0() { return 0.0; }
-    constexpr static double Value90() { return -1.0; }
-    constexpr static double Value(double rad) { return -std::sin(rad); };
+    constexpr static double Value90() { return 1.0; }
+    constexpr static double Value(double rad) { return std::sin(rad); };
 
     //symmetry sign changes
     //return either +1 or -1 to indicate sign change
@@ -71,6 +75,27 @@ class cosine_calculator
     //return either +1 or -1 to indicate sign change
     constexpr static double Sym0() { return 1.0; }
     constexpr static double Sym90() { return -1.0; }
+};
+
+class reverse_fft
+{
+    public:
+    constexpr static double Sign() { return 1.0; }
+
+    template<size_t N>
+    constexpr static void ScaleValues(std::array<std::complex<double>, N> & data)
+    {
+        std::for_each(data.begin(), data.end(), [](auto &n) { n *= (1.0 / N); });
+    }
+};
+
+class forward_fft
+{
+    public:
+    constexpr static double Sign() { return -1.0; }
+
+    template<size_t N>
+    constexpr static void ScaleValues(std::array<std::complex<double>, N> &) { }
 };
 
 template <size_t N, class T>
@@ -120,17 +145,21 @@ constexpr trig_array<N> calc_trigs()
 }
 
 //form the W coefficients from the cosines and sines arrays
-template<size_t N>
+template<size_t N, class T>
 constexpr coeff_array<N> calc_wCoeffs()
 {
+    //auto cosines = calc_cosines_naive<N>();
     auto cosines = calc_trigs<N, cosine_calculator>();
-    auto sines = calc_trigs<N, neg_sine_calculator>();
+    
+    //auto sines = calc_sines_naive<N>();
+    auto sines = calc_trigs<N, sine_calculator>();
+
     coeff_array<N> wCoeffs {0};
 
     for (size_t i = 0; i < cosines.size(); i++) {
 
         for (size_t j = 0; j < cosines.at(i).size(); j++) {
-            wCoeffs.at(i).at(j) = std::complex(cosines.at(i).at(j), sines.at(i).at(j));
+            wCoeffs.at(i).at(j) = std::complex(cosines.at(i).at(j), T::Sign() * sines.at(i).at(j));
         }
     }
     return wCoeffs;
@@ -185,13 +214,13 @@ constexpr std::array<uint, N> calc_swap_lookup()
     return swapLookup;
 }
 
-template <size_t N>
-void fft(std::array<std::complex<double>, N>& data) {
+template <class T = forward_fft, size_t N>
+void fft(std::array<std::complex<double>, N> & data) {
 
     static_assert(isPowerOf2(N), "FFT size must be a power of 2!");
 
     //compile time calculations
-    constexpr auto wCoeffs = calc_wCoeffs<N>();
+    constexpr auto wCoeffs = calc_wCoeffs<N, T>();
     constexpr auto swapLookup = calc_swap_lookup<N>();
 
     //decimation in time
@@ -229,5 +258,9 @@ void fft(std::array<std::complex<double>, N>& data) {
         }
         i2++;
     }
+
+    //if reverse, scale the data by 1/N
+    //if forward, does nothing
+    T::ScaleValues(data);
 
 }

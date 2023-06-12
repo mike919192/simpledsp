@@ -10,10 +10,10 @@ int main()
     
     four1(values, 1);
 
-    std::array<std::complex<double>, 8> complexValues {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535};
-    std::array<std::complex<double>, 16> complexValues2 {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535, 0, 0, 0, 0, 0, 0, 0, 0};
+    complex_array<double, 8> complexValues {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535};
+    complex_array<double, 16> complexValues2 {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    std::array<std::complex<double>, 256> complexValues3 {0};
+    complex_array<double, 256> complexValues3 {0};
     std::array<double, 256> outputMag {0};
     std::array<double, 256> outputPhase {0};
     const double freq1 = 1000.0;
@@ -41,8 +41,8 @@ int main()
     fft<reverse_fft>(complexValues3);
 
     //test linearity
-    std::array<std::complex<double>, 256> x1 {0};
-    std::array<std::complex<double>, 256> x2 {0};
+    complex_array<double, 256> x1 {0};
+    complex_array<double, 256> x2 {0};
     for (size_t i = 0; i < x1.size(); i++) {
         double value = std::sin(2.0 * M_PI * freq1 * (1.0 / fs) * i);
         x1.at(i) = std::complex<double>(value, 0);
@@ -51,32 +51,32 @@ int main()
         x2.at(i) = std::complex<double>(value2, 0);
     }
 
-    std::array<std::complex<double>, 256> a1x1 = x1;
+    complex_array<double, 256> a1x1 = x1;
     std::for_each(a1x1.begin(), a1x1.end(), [a1](auto &n) { n *= a1; });
 
-    std::array<std::complex<double>, 256> a2x2 = x2;
+    complex_array<double, 256> a2x2 = x2;
     std::for_each(a2x2.begin(), a2x2.end(), [a2](auto &n) { n *= a2; });
 
-    std::array<std::complex<double>, 256> a1x1_plus_a2x2 {0};
+    complex_array<double, 256> a1x1_plus_a2x2 {0};
     for (size_t i = 0; i < a1x1_plus_a2x2.size(); i++) {
         a1x1_plus_a2x2.at(i) = a1x1.at(i) + a2x2.at(i);
     }
 
-    std::array<std::complex<double>, 256> fft_data1 = a1x1_plus_a2x2;
+    complex_array<double, 256> fft_data1 = a1x1_plus_a2x2;
     fft(fft_data1);
 
-    std::array<std::complex<double>, 256> fft_data2 = x1;
-    std::array<std::complex<double>, 256> fft_data3 = x2;
+    complex_array<double, 256> fft_data2 = x1;
+    complex_array<double, 256> fft_data3 = x2;
     fft(fft_data2);
     fft(fft_data3);
 
-    std::array<std::complex<double>, 256> a1_fft_data2 = fft_data2;
+    complex_array<double, 256> a1_fft_data2 = fft_data2;
     std::for_each(a1_fft_data2.begin(), a1_fft_data2.end(), [a1](auto &n) { n *= a1; });
 
-    std::array<std::complex<double>, 256> a2_fft_data3 = fft_data3;
+    complex_array<double, 256> a2_fft_data3 = fft_data3;
     std::for_each(a2_fft_data3.begin(), a2_fft_data3.end(), [a2](auto &n) { n *= a2; });
 
-    std::array<std::complex<double>, 256> a1_fft_data2_plus_a2_fft_data3 {0};
+    complex_array<double, 256> a1_fft_data2_plus_a2_fft_data3 {0};
     for (size_t i = 0; i < a1_fft_data2_plus_a2_fft_data3.size(); i++) {
         a1_fft_data2_plus_a2_fft_data3.at(i) = a1_fft_data2.at(i) + a2_fft_data3.at(i);
     }

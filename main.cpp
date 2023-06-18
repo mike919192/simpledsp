@@ -1,17 +1,62 @@
 
-#include "fourier.h"
 #include "fft.h"
 #include <complex>
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+
+std::string exec(const char* cmd) {
+    std::array<char, 1024> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    return result;
+}
+
+void binwrite(const std::vector<std::complex<double>>& data)
+{
+    std::remove("example.bin");
+    std::ofstream myfile("example.bin", std::ios::binary);
+    for (size_t i = 0; i < data.size(); i++) {
+        double real = data.at(i).real();
+        double imag = data.at(i).imag();
+        myfile.write(reinterpret_cast<char*>(&real), sizeof real);
+        myfile.write(reinterpret_cast<char*>(&imag), sizeof imag);
+    }
+}
+
+std::vector<std::complex<double>> binread()
+{
+    auto filesize = std::filesystem::file_size("example2.bin");
+    size_t numElements = filesize / (sizeof(double) * 2);
+    std::vector<std::complex<double>> outVec(numElements);
+    std::ifstream myfile("example2.bin", std::ios::binary);
+    
+    for (size_t i = 0; i < outVec.size(); i++) {
+        double real {0};
+        double imag {0};        
+        myfile.read(reinterpret_cast<char*>(&real), sizeof real);
+        myfile.read(reinterpret_cast<char*>(&imag), sizeof imag);
+        outVec.at(i) = std::complex(real, imag);
+    }
+    return outVec;
+}
 
 int main()
 {
-    std::array<double, 32> values {0.3535, 0, 0.3535, 0, 0.6464, 0, 1.0607, 0, 0.3535, 0, -1.0607, 0, -1.3535, 0, -0.3535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    
-    four1(values, 1);
-
     complex_array<double, 8> complexValues {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535};
     complex_array<double, 16> complexValues2 {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    std::vector<std::complex<double>> vec(complexValues.begin(), complexValues.end());
+    //csvwrite(vec);
+    //std::cout << exec("octave-cli octavefft.m");
+    
 
     complex_array<double, 256> complexValues3 {0};
     std::array<double, 256> outputMag {0};
@@ -30,7 +75,19 @@ int main()
         complexValues3.at(i) = std::complex<double>(value1 + value2, 0);
 	}
 
+    std::vector<std::complex<double>> vec2(complexValues3.begin(), complexValues3.end());
+    binwrite(vec2);
+    std::cout << exec("octave-cli octavefft.m");
+    std::vector<std::complex<double>> readVec = binread();
+
     fft(complexValues3);
+
+    //difference should be very close to 0
+    std::array<double, 256> difference2 {0};
+    for (size_t i = 0; i < difference2.size(); i++) {
+        difference2.at(i) = std::abs(complexValues3.at(i) - readVec.at(i));
+    }
+    double max2 = *std::max_element(difference2.begin(), difference2.end());
 
     for (size_t i = 0; i < complexValues3.size(); i++)
 	{

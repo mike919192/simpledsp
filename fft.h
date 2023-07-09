@@ -332,11 +332,12 @@ void fft_radix4(complex_array<double, N> & data) {
                 uint index2 = k + i + j;
                 uint index3 = k + 2 * i + j;
                 uint index4 = k + 3 * i + j;
-                uint coeff_subscript = 2 * i2 + 1;
-                uint coeff_index1 = (index1 - j) * i2 * i2 * (j2 % 4);
-                uint coeff_index2 = (index2 - j) * i2 * i2 * (j2 % 4);
-                uint coeff_index3 = (index3 - j) * i2 * i2 * (j2 % 4);
-                uint coeff_index4 = (index4 - j) * i2 * i2 * (j2 % 4);
+                uint coeff_subscript = fft_log2(N) - 1;
+                uint four_raised_to_n = i2 > 0 ? 1 << ((i2 - 1) * 2) : 0;
+                uint coeff_index1 = (index1 - j) * four_raised_to_n * (j2 % 4);
+                uint coeff_index2 = (index2 - j) * four_raised_to_n * (j2 % 4);
+                uint coeff_index3 = (index3 - j) * four_raised_to_n * (j2 % 4);
+                uint coeff_index4 = (index4 - j) * four_raised_to_n * (j2 % 4);
 
                 std::complex<double> temp1 = data.at(index1) * wCoeffs.at(coeff_subscript).at(coeff_index1);
                 std::complex<double> temp2 = data.at(index2) * wCoeffs.at(coeff_subscript).at(coeff_index2);

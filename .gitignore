@@ -1,2 +1,4 @@
 main
+catch2/catch_amalgamated.o
 *.bin
+testFFT

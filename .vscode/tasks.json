@@ -9,7 +9,8 @@
                 "-Wall",
                 "-Wextra",
                 "-g",
-                "${file}",
+                "${fileDirname}/*.cpp",
+                "${fileDirname}/catch2/*.o",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

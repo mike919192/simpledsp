@@ -51,7 +51,9 @@ std::vector<std::complex<double>> binread()
 int main()
 {
     complex_array<double, 8> complexValues {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535};
-    complex_array<double, 16> complexValues2 {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535, 0, 0, 0, 0, 0, 0, 0, 0};
+    //complex_array<double, 16> complexValues2 {0.3535, 0.3535, 0.6464, 1.0607, 0.3535, -1.0607, -1.3535, -0.3535, 0, 0, 0, 0, 0, 0, 0, 0};
+    complex_array<double, 16> complexValues2 {0.3535, 0.3535, 0.6464, 1.0607};
+    fft_radix4(complexValues2);
 
     std::vector<std::complex<double>> vec(complexValues.begin(), complexValues.end());
     //csvwrite(vec);

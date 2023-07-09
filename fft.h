@@ -174,6 +174,12 @@ constexpr bool isPowerOf2(uint num)
         return (num & (num - 1)) == 0;
 }
 
+//determine if num is a power of 4
+constexpr bool isPowerOf4(uint num)
+{
+    return isPowerOf2(num) && (fft_log2(num) % 2 == 0);
+}
+
 //reverse the order of bits in the mask of N - 1
 template <size_t N> 
 constexpr uint reverse(uint n)
@@ -202,6 +208,30 @@ constexpr std::array<uint, N> calc_swap_lookup()
     std::array<uint, N> swapLookup {0};
     for (uint i = 0; i < N; i++) {
         swapLookup.at(i) = reverse<N>(i);
+    }
+    //then go through one more time and for every pair, unreverse the one with the higher index
+    //this prevents the swap from occuring twice, which would undo the swap
+    for (uint i = 1; i < N - 1; i++) {
+        uint i2 = swapLookup.at(i);
+        if (i2 != i) {
+            swapLookup.at(i2) = i2;
+        }
+    }
+    return swapLookup;
+}
+
+template <size_t N>
+constexpr std::array<uint, N> calc_radix4_swap_lookup()
+{
+    //first create an array with the output pattern of the radix 4
+    std::array<uint, N> swapLookup {0};
+    uint index {0};
+    for (uint i = 0; i < 4; i++) {
+
+        for (uint j = 0; j < N / 4; j++) {
+            swapLookup.at(index) = j * 4 + i;
+            index++;
+        }        
     }
     //then go through one more time and for every pair, unreverse the one with the higher index
     //this prevents the swap from occuring twice, which would undo the swap
@@ -257,6 +287,61 @@ void fft(complex_array<double, N> & data) {
             }
         }
         i2++;
+    }
+
+    //if reverse, scale the data by 1/N
+    //if forward, does nothing
+    T::ScaleValues(data);
+
+}
+
+template <class T = forward_fft, size_t N>
+void fft_radix4(complex_array<double, N> & data) {
+
+    static_assert(isPowerOf4(N), "FFT radix 4 size must be a power of 4!");
+
+    //compile time calculations
+    constexpr auto wCoeffs = calc_wCoeffs<N, T>();
+    constexpr auto swapLookup = calc_radix4_swap_lookup<N>();
+
+    uint i2 = 0;
+    for (uint i = N / 4; i >= 1; i = i >> 2) {
+
+        uint j2 = 0;
+        for (uint j = 0; j < N; j += (i << 2)) {
+
+            for (uint k = 0; k < i; k++) {
+                uint index1 = k + j;
+                uint index2 = k + i + j;
+                uint index3 = k + 2 * i + j;
+                uint index4 = k + 3 * i + j;
+                uint coeff_subscript = 2 * i2 + 1;
+                uint coeff_index1 = (index1 - j) * i2 * i2 * (j2 % 4);
+                uint coeff_index2 = (index2 - j) * i2 * i2 * (j2 % 4);
+                uint coeff_index3 = (index3 - j) * i2 * i2 * (j2 % 4);
+                uint coeff_index4 = (index4 - j) * i2 * i2 * (j2 % 4);
+
+                std::complex<double> temp1 = data.at(index1) * wCoeffs.at(coeff_subscript).at(coeff_index1);
+                std::complex<double> temp2 = data.at(index2) * wCoeffs.at(coeff_subscript).at(coeff_index2);
+                std::complex<double> temp3 = data.at(index3) * wCoeffs.at(coeff_subscript).at(coeff_index3);
+                std::complex<double> temp4 = data.at(index4) * wCoeffs.at(coeff_subscript).at(coeff_index4);
+                std::complex<double> temp2_timesi = std::complex<double>(-temp2.imag(), temp2.real());
+                std::complex<double> temp4_timesi = std::complex<double>(-temp4.imag(), temp4.real());
+
+                data.at(index1) = temp1 + temp2 + temp3 + temp4;
+                data.at(index2) = temp1 - temp2_timesi - temp3 + temp4_timesi;
+                data.at(index3) = temp1 - temp2 + temp3 - temp4;
+                data.at(index4) = temp1 + temp2_timesi - temp3 - temp4_timesi;
+            }
+            j2++;
+        }
+        i2++;
+    }
+
+    for (uint i = 1; i < N - 1; i++) {
+        uint i2 = swapLookup.at(i);
+        if (i2 != i)
+            std::swap(data.at(i), data.at(i2));
     }
 
     //if reverse, scale the data by 1/N

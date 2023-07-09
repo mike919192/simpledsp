@@ -180,58 +180,75 @@ constexpr bool isPowerOf4(uint num)
     return isPowerOf2(num) && (fft_log2(num) % 2 == 0);
 }
 
-//reverse the order of bits in the mask of N - 1
+// //reverse the order of bits in the mask of N - 1
+// template <size_t N> 
+// constexpr uint reverse(uint n)
+// {
+//     uint retValue {0};
+//     uint shift = fft_log2(N) - 1;
+//     uint upperBit = N >> 1;
+//     uint lowerBit = 1;
+//     while (upperBit > lowerBit) {
+//         retValue |= (n & upperBit) >> shift;
+//         retValue |= (n & lowerBit) << shift;
+//         upperBit = upperBit >> 1;
+//         lowerBit = lowerBit << 1;
+//         shift -= 2;
+//     }
+//     if (upperBit == lowerBit) {
+//         retValue |= n & upperBit;
+//     }
+//     return retValue;
+// }
+
+//reverse the order of bits/digits
 template <size_t N> 
-constexpr uint reverse(uint n)
+constexpr uint digit_reverse(uint n, uint base)
 {
     uint retValue {0};
-    uint shift = fft_log2(N) - 1;
-    uint upperBit = N >> 1;
-    uint lowerBit = 1;
-    while (upperBit > lowerBit) {
-        retValue |= (n & upperBit) >> shift;
-        retValue |= (n & lowerBit) << shift;
-        upperBit = upperBit >> 1;
-        lowerBit = lowerBit << 1;
-        shift -= 2;
+    uint numBits = fft_log2(base);
+    uint shift = fft_log2(N) - numBits;    
+    uint upperBits = (base - 1) << shift;
+    uint lowerBits = base - 1;
+    while (upperBits > lowerBits) {
+        retValue |= (n & upperBits) >> shift;
+        retValue |= (n & lowerBits) << shift;
+        upperBits = upperBits >> numBits;
+        lowerBits = lowerBits << numBits;
+        shift -= numBits * 2;
     }
-    if (upperBit == lowerBit) {
-        retValue |= n & upperBit;
+    if (upperBits == lowerBits) {
+        retValue |= n & upperBits;
     }
     return retValue;
 }
 
-template <size_t N> 
-constexpr std::array<uint, N> calc_swap_lookup()
+// template <size_t N> 
+// constexpr std::array<uint, N> calc_swap_lookup()
+// {
+//     //first create an array where every element value is reversed bits of the index
+//     std::array<uint, N> swapLookup {0};
+//     for (uint i = 0; i < N; i++) {
+//         swapLookup.at(i) = reverse<N>(i);
+//     }
+//     //then go through one more time and for every pair, unreverse the one with the higher index
+//     //this prevents the swap from occuring twice, which would undo the swap
+//     for (uint i = 1; i < N - 1; i++) {
+//         uint i2 = swapLookup.at(i);
+//         if (i2 != i) {
+//             swapLookup.at(i2) = i2;
+//         }
+//     }
+//     return swapLookup;
+// }
+
+template <size_t N>
+constexpr std::array<uint, N> calc_swap_lookup(uint base)
 {
     //first create an array where every element value is reversed bits of the index
     std::array<uint, N> swapLookup {0};
     for (uint i = 0; i < N; i++) {
-        swapLookup.at(i) = reverse<N>(i);
-    }
-    //then go through one more time and for every pair, unreverse the one with the higher index
-    //this prevents the swap from occuring twice, which would undo the swap
-    for (uint i = 1; i < N - 1; i++) {
-        uint i2 = swapLookup.at(i);
-        if (i2 != i) {
-            swapLookup.at(i2) = i2;
-        }
-    }
-    return swapLookup;
-}
-
-template <size_t N>
-constexpr std::array<uint, N> calc_radix4_swap_lookup()
-{
-    //first create an array with the output pattern of the radix 4
-    std::array<uint, N> swapLookup {0};
-    uint index {0};
-    for (uint i = 0; i < 4; i++) {
-
-        for (uint j = 0; j < N / 4; j++) {
-            swapLookup.at(index) = j * 4 + i;
-            index++;
-        }        
+        swapLookup.at(i) = digit_reverse<N>(i, base);
     }
     //then go through one more time and for every pair, unreverse the one with the higher index
     //this prevents the swap from occuring twice, which would undo the swap
@@ -251,7 +268,7 @@ void fft(complex_array<double, N> & data) {
 
     //compile time calculations
     constexpr auto wCoeffs = calc_wCoeffs<N, T>();
-    constexpr auto swapLookup = calc_swap_lookup<N>();
+    constexpr auto swapLookup = calc_swap_lookup<N>(2);
 
     //decimation in time
     //perform swap on inputs
@@ -302,7 +319,7 @@ void fft_radix4(complex_array<double, N> & data) {
 
     //compile time calculations
     constexpr auto wCoeffs = calc_wCoeffs<N, T>();
-    constexpr auto swapLookup = calc_radix4_swap_lookup<N>();
+    constexpr auto swapLookup = calc_swap_lookup<N>(4);
 
     uint i2 = 0;
     for (uint i = N / 4; i >= 1; i = i >> 2) {

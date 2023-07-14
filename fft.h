@@ -80,7 +80,7 @@ class cosine_calculator
 class reverse_fft
 {
     public:
-    constexpr static double Sign() { return 1.0; }
+    constexpr static double Sign() { return -1.0; }
 
     template<size_t N>
     constexpr static void ScaleValues(complex_array<double, N> & data)
@@ -92,7 +92,7 @@ class reverse_fft
 class forward_fft
 {
     public:
-    constexpr static double Sign() { return -1.0; }
+    constexpr static double Sign() { return 1.0; }
 
     template<size_t N>
     constexpr static void ScaleValues(complex_array<double, N> &) { }
@@ -159,7 +159,7 @@ constexpr coeff_array<N> calc_wCoeffs()
     for (size_t i = 0; i < cosines.size(); i++) {
 
         for (size_t j = 0; j < cosines.at(i).size(); j++) {
-            wCoeffs.at(i).at(j) = std::complex(cosines.at(i).at(j), T::Sign() * sines.at(i).at(j));
+            wCoeffs.at(i).at(j) = std::complex(cosines.at(i).at(j), T::Sign() * -1.0 * sines.at(i).at(j));
         }
     }
     return wCoeffs;
@@ -343,8 +343,8 @@ void fft_radix4(complex_array<double, N> & data) {
                 std::complex<double> temp2 = data.at(index2) * wCoeffs.at(coeff_subscript).at(coeff_index2);
                 std::complex<double> temp3 = data.at(index3) * wCoeffs.at(coeff_subscript).at(coeff_index3);
                 std::complex<double> temp4 = data.at(index4) * wCoeffs.at(coeff_subscript).at(coeff_index4);
-                std::complex<double> temp2_timesi = std::complex<double>(-temp2.imag(), temp2.real());
-                std::complex<double> temp4_timesi = std::complex<double>(-temp4.imag(), temp4.real());
+                std::complex<double> temp2_timesi = T::Sign() * std::complex<double>(-temp2.imag(), temp2.real());
+                std::complex<double> temp4_timesi = T::Sign() * std::complex<double>(-temp4.imag(), temp4.real());
 
                 data.at(index1) = temp1 + temp2 + temp3 + temp4;
                 data.at(index2) = temp1 - temp2_timesi - temp3 + temp4_timesi;

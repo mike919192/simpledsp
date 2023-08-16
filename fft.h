@@ -22,8 +22,8 @@ using trig_array = std::array<std::array<double, N>, fft_log2(N)>;
 template <size_t N>
 using coeff_array = std::array<std::array<std::complex<double>, N>, fft_log2(N)>;
 
-template <class T, size_t N>
-using complex_array = std::array<std::complex<T>, N>;
+template <size_t N>
+using complex_array = std::array<std::complex<double>, N>;
 
 template <size_t N>
 constexpr trig_array<N> calc_cosines_naive()
@@ -83,7 +83,7 @@ class reverse_fft
     constexpr static double Sign() { return -1.0; }
 
     template<size_t N>
-    constexpr static void ScaleValues(complex_array<double, N> & data)
+    constexpr static void ScaleValues(complex_array<N> & data)
     {
         std::for_each(data.begin(), data.end(), [](auto &n) { n *= (1.0 / N); });
     }
@@ -95,7 +95,7 @@ class forward_fft
     constexpr static double Sign() { return 1.0; }
 
     template<size_t N>
-    constexpr static void ScaleValues(complex_array<double, N> &) { }
+    constexpr static void ScaleValues(complex_array<N> &) { }
 };
 
 template <size_t N, class T>
@@ -265,7 +265,7 @@ constexpr std::array<uint, N> calc_swap_lookup(uint base)
 }
 
 template <class T = forward_fft, size_t N>
-void fft(complex_array<double, N> & data) {
+void fft(complex_array<N> & data) {
 
     static_assert(isPowerOf2(N), "FFT size must be a power of 2!");
 
@@ -316,7 +316,7 @@ void fft(complex_array<double, N> & data) {
 }
 
 template <class T = forward_fft, size_t N>
-void fft_radix4(complex_array<double, N> & data) {
+void fft_radix4(complex_array<N> & data) {
 
     static_assert(isPowerOf4(N), "FFT radix 4 size must be a power of 4!");
 

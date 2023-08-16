@@ -249,12 +249,13 @@ constexpr std::array<uint, N> calc_swap_lookup(uint base)
 {
     //first create an array where every element value is reversed bits of the index
     std::array<uint, N> swapLookup {0};
-    for (uint i = 0; i < N; i++) {
+    
+    for (size_t i = 0; i < N; i++) {
         swapLookup.at(i) = digit_reverse<N>(i, base);
     }
     //then go through one more time and for every pair, unreverse the one with the higher index
     //this prevents the swap from occuring twice, which would undo the swap
-    for (uint i = 1; i < N - 1; i++) {
+    for (size_t i = 1; i < N - 1; i++) {
         uint i2 = swapLookup.at(i);
         if (i2 != i) {
             swapLookup.at(i2) = i2;

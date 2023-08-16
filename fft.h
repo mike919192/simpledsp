@@ -10,7 +10,7 @@
 constexpr uint fft_log2(uint num)
 {
     uint retValue {0};
-    while( (num = num >> 1) > 0) {
+    while( (num = num >> 1) > 0u) {
         retValue++;
     }
     return retValue;
@@ -117,7 +117,7 @@ constexpr trig_array<N> calc_trigs()
         } else {
             //calculate up to but not including 90 deg
             uint num = 1 << (i - 1);
-            for (size_t j = 1; j < num; j++) {
+            for (uint j = 1; j < num; j++) {
                 values.at(i).at(j) = T::Value(2 * M_PI * j / pow2);
             }
             //next element is 90 deg

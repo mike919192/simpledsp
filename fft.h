@@ -102,35 +102,36 @@ template <size_t N, class T>
 constexpr trig_array<N> calc_trigs()
 {
     trig_array<N> values {0};
-    for (size_t i = 0; i < values.size(); i++) {
+    size_t i = 0;
+    for ( auto& value : values ) {
         uint pow2 = 1 << (i + 1);
         
         //first element at 0 deg
-        values.at(i).at(0) = T::Value0();
+        value.at(0) = T::Value0();
 
         //i = 0 is special
         //just alternate +1 and -1
         if (i == 0) {
-            for (size_t j = 1; j < values.at(i).size(); j++) {
-                values.at(i).at(j) = values.at(i).at(j-1) * -1.0;
+            for (size_t j = 1; j < value.size(); j++) {
+                value.at(j) = value.at(j-1) * -1.0;
             }
         } else {
             //calculate up to but not including 90 deg
             uint num = 1 << (i - 1);
             for (uint j = 1; j < num; j++) {
-                values.at(i).at(j) = T::Value(2 * M_PI * j / pow2);
+                value.at(j) = T::Value(2 * M_PI * j / pow2);
             }
             //next element is 90 deg
-            values.at(i).at(num) = T::Value90();    
+            value.at(num) = T::Value90();    
 
             //now use symmetry to get the rest of the values
             int dir = -1;
             double sign = T::Sym90();
             uint bouncyIndex = num;
 
-            for (size_t j = num + 1; j < values.at(i).size(); j++) {
+            for (size_t j = num + 1; j < value.size(); j++) {
                 bouncyIndex += dir;
-                values.at(i).at(j) = values.at(i).at(bouncyIndex) * sign;                
+                value.at(j) = value.at(bouncyIndex) * sign;                
                 if (bouncyIndex == 0) {
                     dir = 1;
                     sign *= T::Sym0();
@@ -140,6 +141,7 @@ constexpr trig_array<N> calc_trigs()
                 }
             }
         }
+        i++;
     }
     return values;
 }

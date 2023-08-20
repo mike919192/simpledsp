@@ -38,9 +38,9 @@ template <size_t N>
 constexpr trig_array<N> calc_cosines_naive()
 {
     trig_array<N> cosines {0};
-    for (size_t i = 0; i < cosines.size(); i++) {
-        uint pow2 = 1 << i + 1;
-        for (size_t j = 0; j < cosines.at(i).size(); j++) {
+    for (size_t i {0}; i < cosines.size(); i++) {
+        uint pow2 {1u << i + 1u};
+        for (size_t j {0}; j < cosines.at(i).size(); j++) {
             cosines.at(i).at(j) = std::cos(2 * M_PI * j / pow2);
         }
     }
@@ -51,9 +51,9 @@ template <size_t N>
 constexpr trig_array<N> calc_sines_naive()
 {
     trig_array<N> sines {0};
-    for (size_t i = 0; i < sines.size(); i++) {
-        uint pow2 = 1 << i + 1;
-        for (size_t j = 0; j < sines.at(i).size(); j++) {
+    for (size_t i {0}; i < sines.size(); i++) {
+        uint pow2 {1u << i + 1u};
+        for (size_t j {0}; j < sines.at(i).size(); j++) {
             sines.at(i).at(j) = -std::sin(2 * M_PI * j / pow2);
         }
     }
@@ -111,9 +111,9 @@ template <size_t N, class T>
 constexpr trig_array<N> calc_trigs()
 {
     trig_array<N> values {0};
-    size_t i = 0;
+    size_t i {0};
     for ( auto& value : values ) {
-        uint pow2 = 1u << (i + 1u);
+        uint pow2 {1u << (i + 1u)};
         
         //first element at 0 deg
         value.at(0) = T::Value0();
@@ -121,24 +121,24 @@ constexpr trig_array<N> calc_trigs()
         //i = 0 is special
         //just alternate +1 and -1
         if (i == 0) {
-            for (size_t j = 1; j < value.size(); j++) {
+            for (size_t j {1}; j < value.size(); j++) {
                 value.at(j) = value.at(j-1) * -1.0;
             }
         } else {
             //calculate up to but not including 90 deg
-            uint num = 1u << (i - 1u);
-            for (uint j = 1; j < num; j++) {
+            uint num {1u << (i - 1u)};
+            for (uint j {1}; j < num; j++) {
                 value.at(j) = T::Value(2 * M_PI * j / pow2);
             }
             //next element is 90 deg
             value.at(num) = T::Value90();    
 
             //now use symmetry to get the rest of the values
-            int dir = -1;
-            double sign = T::Sym90();
-            uint bouncyIndex = num;
+            int dir {-1};
+            double sign {T::Sym90()};
+            uint bouncyIndex {num};
 
-            for (size_t j = num + 1; j < value.size(); j++) {
+            for (size_t j {num + 1}; j < value.size(); j++) {
                 bouncyIndex += dir;
                 value.at(j) = value.at(bouncyIndex) * sign;                
                 if (bouncyIndex == 0) {
@@ -160,16 +160,16 @@ template<size_t N, class T>
 constexpr coeff_array<N> calc_wCoeffs()
 {
     //auto cosines = calc_cosines_naive<N>();
-    auto cosines = calc_trigs<N, cosine_calculator>();
+    auto cosines {calc_trigs<N, cosine_calculator>()};
     
     //auto sines = calc_sines_naive<N>();
-    auto sines = calc_trigs<N, sine_calculator>();
+    auto sines {calc_trigs<N, sine_calculator>()};
 
     coeff_array<N> wCoeffs {0};
 
-    for (size_t i = 0; i < cosines.size(); i++) {
+    for (size_t i {0}; i < cosines.size(); i++) {
 
-        for (size_t j = 0; j < cosines.at(i).size(); j++) {
+        for (size_t j {0}; j < cosines.at(i).size(); j++) {
             wCoeffs.at(i).at(j) = std::complex(cosines.at(i).at(j), T::Sign() * -1.0 * sines.at(i).at(j));
         }
     }
@@ -217,10 +217,10 @@ template <size_t N>
 constexpr uint digit_reverse(uint n, uint base)
 {
     uint retValue {0};
-    uint numBits = fft_log2(base);
-    uint shift = fft_log2(N) - numBits;    
-    uint upperBits = (base - 1) << shift;
-    uint lowerBits = base - 1;
+    uint numBits {fft_log2(base)};
+    uint shift {fft_log2(N) - numBits};    
+    uint upperBits {(base - 1) << shift};
+    uint lowerBits {base - 1};
     while (upperBits > lowerBits) {
         retValue |= (n & upperBits) >> shift;
         retValue |= (n & lowerBits) << shift;
@@ -259,13 +259,13 @@ constexpr std::array<uint, N> calc_swap_lookup(uint base)
     //first create an array where every element value is reversed bits of the index
     std::array<uint, N> swapLookup {0};
     
-    for (size_t i = 0; i < N; i++) {
+    for (size_t i {0}; i < N; i++) {
         swapLookup.at(i) = digit_reverse<N>(i, base);
     }
     //then go through one more time and for every pair, unreverse the one with the higher index
     //this prevents the swap from occuring twice, which would undo the swap
-    for (size_t i = 1; i < N - 1; i++) {
-        uint i2 = swapLookup.at(i);
+    for (size_t i {1}; i < N - 1; i++) {
+        uint i2 {swapLookup.at(i)};
         if (i2 != i) {
             swapLookup.at(i2) = i2;
         }

@@ -327,6 +327,7 @@ void fft_radix4(complex_array<N> & data) {
     //compile time calculations
     constexpr auto wCoeffs {calc_wCoeffs<N, T>()};
     constexpr auto swapLookup {calc_swap_lookup<N>(4)};
+    constexpr uint coeff_subscript {fft_log2(N) - 1};
 
     for (uint i {0}; i < fft_log4(N); i++) {
         uint i_group_size {static_cast<uint>(N) / (4u << (2u * i))};
@@ -339,7 +340,6 @@ void fft_radix4(complex_array<N> & data) {
                 uint index2 {k + i_group_size + j};
                 uint index3 {k + 2 * i_group_size + j};
                 uint index4 {k + 3 * i_group_size + j};
-                uint coeff_subscript {fft_log2(N) - 1};
                 uint four_raised_to_n {i > 0 ? 1u << ((i - 1u) * 2u) : 0};
                 uint coeff_index1 {(index1 - j) * four_raised_to_n * (j2 % 4)};
                 uint coeff_index2 {(index2 - j) * four_raised_to_n * (j2 % 4)};

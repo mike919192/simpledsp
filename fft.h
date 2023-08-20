@@ -104,7 +104,7 @@ constexpr trig_array<N> calc_trigs()
     trig_array<N> values {0};
     size_t i = 0;
     for ( auto& value : values ) {
-        uint pow2 = 1 << (i + 1);
+        uint pow2 = 1u << (i + 1u);
         
         //first element at 0 deg
         value.at(0) = T::Value0();
@@ -117,7 +117,7 @@ constexpr trig_array<N> calc_trigs()
             }
         } else {
             //calculate up to but not including 90 deg
-            uint num = 1 << (i - 1);
+            uint num = 1u << (i - 1u);
             for (uint j = 1; j < num; j++) {
                 value.at(j) = T::Value(2 * M_PI * j / pow2);
             }

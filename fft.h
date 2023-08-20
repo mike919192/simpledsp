@@ -16,6 +16,15 @@ constexpr uint fft_log2(uint num)
     return retValue;
 }
 
+constexpr uint fft_log4(uint num)
+{
+    uint retValue {0};
+    while( (num = num >> 2) > 0u) {
+        retValue++;
+    }
+    return retValue;
+}
+
 template <size_t N>
 using trig_array = std::array<std::array<double, N>, fft_log2(N)>;
 
@@ -265,48 +274,43 @@ constexpr std::array<uint, N> calc_swap_lookup(uint base)
 }
 
 template <class T = forward_fft, size_t N>
-void fft(complex_array<N> & data) {
+void fft_radix2(complex_array<N> & data) {
 
     static_assert(isPowerOf2(N), "FFT size must be a power of 2!");
 
     //compile time calculations
-    constexpr auto wCoeffs = calc_wCoeffs<N, T>();
-    constexpr auto swapLookup = calc_swap_lookup<N>(2);
+    constexpr auto wCoeffs {calc_wCoeffs<N, T>()};
+    constexpr auto swapLookup {calc_swap_lookup<N>(2)};
 
     //decimation in time
     //perform swap on inputs
-    for (uint i = 1; i < N - 1; i++) {
-        uint i2 = swapLookup.at(i);
+    for (uint i {1}; i < N - 1; i++) {
+        uint i2 {swapLookup.at(i)};
         if (i2 != i)
             std::swap(data.at(i), data.at(i2));
     }
 
     //outer most loop is the FFT stages
     //2pt FFT -> 4pt FFT -> 8pt FFT -> etc
-    uint i2 = 0;
-    for (uint i = 1; i < N; i = i << 1) {
+    for (uint i {0}; i < fft_log2(N); i++) {
+        uint two_raised_to_i {1u << i};
 
         //the inside 2 loops perform the butterfly pattern
-        for (uint j = 0; j < N; j += (i << 1)) {
+        for (uint j = 0; j < N; j += (two_raised_to_i << 1)) {
 
-            for (uint k = 0; k < i; k++) {
-                uint index1 = j + k;
-                uint index2 = j + k + i;
-
-                //original formula page 137
-                //std::complex<double> val1 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index1);
-                //std::complex<double> val2 = data.at(index1) + data.at(index2) * wCoeffs.at(i2).at(index2);
+            for (uint k {0}; k < two_raised_to_i; k++) {
+                uint index1 {j + k};
+                uint index2 {j + k + two_raised_to_i};
 
                 //optimization from page 145
-                std::complex<double> temp = data.at(index2) * wCoeffs.at(i2).at(index1);
-                std::complex<double> val1 = data.at(index1) + temp;
-                std::complex<double> val2 = data.at(index1) - temp;
+                std::complex<double> temp {data.at(index2) * wCoeffs.at(i).at(index1)};
+                std::complex<double> val1 {data.at(index1) + temp};
+                std::complex<double> val2 {data.at(index1) - temp};
 
                 data.at(index1) = val1;
                 data.at(index2) = val2;
             }
         }
-        i2++;
     }
 
     //if reverse, scale the data by 1/N
@@ -321,33 +325,33 @@ void fft_radix4(complex_array<N> & data) {
     static_assert(isPowerOf4(N), "FFT radix 4 size must be a power of 4!");
 
     //compile time calculations
-    constexpr auto wCoeffs = calc_wCoeffs<N, T>();
-    constexpr auto swapLookup = calc_swap_lookup<N>(4);
+    constexpr auto wCoeffs {calc_wCoeffs<N, T>()};
+    constexpr auto swapLookup {calc_swap_lookup<N>(4)};
 
-    uint i2 = 0;
-    for (uint i = N / 4; i >= 1; i = i >> 2) {
+    for (uint i {0}; i < fft_log4(N); i++) {
+        uint i_group_size {static_cast<uint>(N) / (4u << (2u * i))};
 
-        uint j2 = 0;
-        for (uint j = 0; j < N; j += (i << 2)) {
+        uint j2 {0};
+        for (uint j {0}; j < N; j += (i_group_size << 2)) {
 
-            for (uint k = 0; k < i; k++) {
-                uint index1 = k + j;
-                uint index2 = k + i + j;
-                uint index3 = k + 2 * i + j;
-                uint index4 = k + 3 * i + j;
-                uint coeff_subscript = fft_log2(N) - 1;
-                uint four_raised_to_n = i2 > 0 ? 1 << ((i2 - 1) * 2) : 0;
-                uint coeff_index1 = (index1 - j) * four_raised_to_n * (j2 % 4);
-                uint coeff_index2 = (index2 - j) * four_raised_to_n * (j2 % 4);
-                uint coeff_index3 = (index3 - j) * four_raised_to_n * (j2 % 4);
-                uint coeff_index4 = (index4 - j) * four_raised_to_n * (j2 % 4);
+            for (uint k {0}; k < i_group_size; k++) {
+                uint index1 {k + j};
+                uint index2 {k + i_group_size + j};
+                uint index3 {k + 2 * i_group_size + j};
+                uint index4 {k + 3 * i_group_size + j};
+                uint coeff_subscript {fft_log2(N) - 1};
+                uint four_raised_to_n {i > 0 ? 1u << ((i - 1u) * 2u) : 0};
+                uint coeff_index1 {(index1 - j) * four_raised_to_n * (j2 % 4)};
+                uint coeff_index2 {(index2 - j) * four_raised_to_n * (j2 % 4)};
+                uint coeff_index3 {(index3 - j) * four_raised_to_n * (j2 % 4)};
+                uint coeff_index4 {(index4 - j) * four_raised_to_n * (j2 % 4)};
 
-                std::complex<double> temp1 = data.at(index1) * wCoeffs.at(coeff_subscript).at(coeff_index1);
-                std::complex<double> temp2 = data.at(index2) * wCoeffs.at(coeff_subscript).at(coeff_index2);
-                std::complex<double> temp3 = data.at(index3) * wCoeffs.at(coeff_subscript).at(coeff_index3);
-                std::complex<double> temp4 = data.at(index4) * wCoeffs.at(coeff_subscript).at(coeff_index4);
-                std::complex<double> temp2_timesi = T::Sign() * std::complex<double>(-temp2.imag(), temp2.real());
-                std::complex<double> temp4_timesi = T::Sign() * std::complex<double>(-temp4.imag(), temp4.real());
+                std::complex<double> temp1 {data.at(index1) * wCoeffs.at(coeff_subscript).at(coeff_index1)};
+                std::complex<double> temp2 {data.at(index2) * wCoeffs.at(coeff_subscript).at(coeff_index2)};
+                std::complex<double> temp3 {data.at(index3) * wCoeffs.at(coeff_subscript).at(coeff_index3)};
+                std::complex<double> temp4 {data.at(index4) * wCoeffs.at(coeff_subscript).at(coeff_index4)};
+                std::complex<double> temp2_timesi {T::Sign() * std::complex<double>(-temp2.imag(), temp2.real())};
+                std::complex<double> temp4_timesi {T::Sign() * std::complex<double>(-temp4.imag(), temp4.real())};
 
                 data.at(index1) = temp1 + temp2 + temp3 + temp4;
                 data.at(index2) = temp1 - temp2_timesi - temp3 + temp4_timesi;
@@ -356,11 +360,10 @@ void fft_radix4(complex_array<N> & data) {
             }
             j2++;
         }
-        i2++;
     }
 
-    for (uint i = 1; i < N - 1; i++) {
-        uint i2 = swapLookup.at(i);
+    for (uint i {1}; i < N - 1; i++) {
+        uint i2 {swapLookup.at(i)};
         if (i2 != i)
             std::swap(data.at(i), data.at(i2));
     }

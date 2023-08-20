@@ -30,7 +30,7 @@ TEST_CASE("FFT Radix 2 test", "[single-file]")
 
     SECTION("FFT Forward Test")
     {
-        fft(s);
+        fft_radix2(s);
 
         double max_error = calc_max_error(S, s);
 
@@ -39,7 +39,7 @@ TEST_CASE("FFT Radix 2 test", "[single-file]")
 
     SECTION("FFT Reverse Test")
     {        
-        fft<reverse_fft>(S);
+        fft_radix2<reverse_fft>(S);
 
         double max_error = calc_max_error(S, s);
 
@@ -55,8 +55,8 @@ TEST_CASE("FFT Radix 2 test", "[single-file]")
             s2.at(i) = std::cos(n * 2 * M_PI * i / N + (M_PI / 2.0));
         }
 
-        fft(s);
-        fft(s2);
+        fft_radix2(s);
+        fft_radix2(s2);
 
         complex_array<N> S2 {0};
         S2.at(n) = std::complex<double>(0, N / 2);
@@ -101,12 +101,12 @@ TEST_CASE("FFT Radix 2 linearity", "[single-file]")
     }
 
     complex_array<N> fft_data1 = a1x1_plus_a2x2;
-    fft(fft_data1);
+    fft_radix2(fft_data1);
 
     complex_array<N> fft_data2 = x1;
     complex_array<N> fft_data3 = x2;
-    fft(fft_data2);
-    fft(fft_data3);
+    fft_radix2(fft_data2);
+    fft_radix2(fft_data3);
 
     complex_array<N> a1_fft_data2 = fft_data2;
     std::for_each(a1_fft_data2.begin(), a1_fft_data2.end(), [a1](auto &n) { n *= a1; });
@@ -240,7 +240,7 @@ TEST_CASE("FFT benchmark", "[single-file]")
 
     BENCHMARK("Radix2 FFT")
     {
-        fft(complexValues);
+        fft_radix2(complexValues);
         return complexValues;
     };
 

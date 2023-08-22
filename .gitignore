@@ -1,4 +1,4 @@
-test/catch2/*
-*.bin
-test/testFFT
+test/catch2/catch_amalgamated.*
 .vscode/*
+*.o
+*.out

@@ -8,6 +8,7 @@
                 "-fdiagnostics-color=always",
                 "-Wall",
                 "-Wextra",
+                "-I../include/",
                 "-g",
                 "${fileDirname}/*.cpp",
                 "${fileDirname}/catch2/*.o",

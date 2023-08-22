@@ -1,4 +1,4 @@
 main
-catch2/catch_amalgamated.o
+test/catch2/catch_amalgamated.o
 *.bin
-testFFT
+test/testFFT

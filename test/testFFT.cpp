@@ -1,6 +1,6 @@
 
 #include "catch2/catch_amalgamated.hpp"
-#include "fft.h"
+#include "sdsp/fft.h"
 
 template <size_t N>
 double calc_max_error(const sdsp::complex_array<N> &observed, const sdsp::complex_array<N> &expected)

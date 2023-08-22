@@ -1,4 +1,3 @@
-main
 test/catch2/*
 *.bin
 test/testFFT

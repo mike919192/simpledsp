@@ -236,8 +236,8 @@ namespace sdsp
     }
 
     template <class T = forward_fft, size_t N>
-    void fft_radix2(complex_array<N> & data) {
-
+    void fft_radix2(complex_array<N> & data) 
+    {
         static_assert(isPowerOf2(N), "FFT size must be a power of 2!");
 
         //compile time calculations
@@ -264,7 +264,7 @@ namespace sdsp
                     uint index2 {j + k + two_raised_to_i};
 
                     //optimization from page 145
-                    std::complex<double> temp {index1 > 0 ? data.at(index2) * wCoeffs.at(i).at(index1): data.at(index2)};
+                    std::complex<double> temp {data.at(index2) * wCoeffs.at(i).at(index1)};
                     std::complex<double> val1 {data.at(index1) + temp};
                     std::complex<double> val2 {data.at(index1) - temp};
 
@@ -280,8 +280,8 @@ namespace sdsp
     }
 
     template <class T = forward_fft, size_t N>
-    void fft_radix4(complex_array<N> & data) {
-
+    void fft_radix4(complex_array<N> & data) 
+    {
         static_assert(isPowerOf4(N), "FFT radix 4 size must be a power of 4!");
 
         //compile time calculations

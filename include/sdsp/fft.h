@@ -27,6 +27,21 @@ namespace sdsp
         return retValue;
     }
 
+    //determine if num is a power of 2
+    constexpr bool isPowerOf2(uint num)
+    {
+        if (num == 0)
+            return false;
+        else
+            return (num & (num - 1)) == 0;
+    }
+
+    //determine if num is a power of 4
+    constexpr bool isPowerOf4(uint num)
+    {
+        return isPowerOf2(num) && (log2(num) % 2 == 0);
+    }
+
     template <size_t N>
     using trig_array = std::array<std::array<double, N>, log2(N)>;
 
@@ -176,50 +191,14 @@ namespace sdsp
             }
         }
         return wCoeffs;
-    }
-
-    //determine if num is a power of 2
-    constexpr bool isPowerOf2(uint num)
-    {
-        if (num == 0)
-            return false;
-        else
-            return (num & (num - 1)) == 0;
-    }
-
-    //determine if num is a power of 4
-    constexpr bool isPowerOf4(uint num)
-    {
-        return isPowerOf2(num) && (log2(num) % 2 == 0);
-    }
-
-    // //reverse the order of bits in the mask of N - 1
-    // template <size_t N> 
-    // constexpr uint reverse(uint n)
-    // {
-    //     uint retValue {0};
-    //     uint shift = fft_log2(N) - 1;
-    //     uint upperBit = N >> 1;
-    //     uint lowerBit = 1;
-    //     while (upperBit > lowerBit) {
-    //         retValue |= (n & upperBit) >> shift;
-    //         retValue |= (n & lowerBit) << shift;
-    //         upperBit = upperBit >> 1;
-    //         lowerBit = lowerBit << 1;
-    //         shift -= 2;
-    //     }
-    //     if (upperBit == lowerBit) {
-    //         retValue |= n & upperBit;
-    //     }
-    //     return retValue;
-    // }
+    }    
 
     //reverse the order of bits/digits
-    template <size_t N> 
-    constexpr uint digit_reverse(uint n, uint base)
+    template <size_t N, uint base> 
+    constexpr uint digit_reverse(uint n)
     {
-        uint retValue {0};
-        uint numBits {log2(base)};
+        constexpr uint numBits {log2(base)};
+        uint retValue {0};        
         uint shift {log2(N) - numBits};    
         uint upperBits {(base - 1) << shift};
         uint lowerBits {base - 1};
@@ -236,33 +215,14 @@ namespace sdsp
         return retValue;
     }
 
-    // template <size_t N> 
-    // constexpr std::array<uint, N> calc_swap_lookup()
-    // {
-    //     //first create an array where every element value is reversed bits of the index
-    //     std::array<uint, N> swapLookup {0};
-    //     for (uint i = 0; i < N; i++) {
-    //         swapLookup.at(i) = reverse<N>(i);
-    //     }
-    //     //then go through one more time and for every pair, unreverse the one with the higher index
-    //     //this prevents the swap from occuring twice, which would undo the swap
-    //     for (uint i = 1; i < N - 1; i++) {
-    //         uint i2 = swapLookup.at(i);
-    //         if (i2 != i) {
-    //             swapLookup.at(i2) = i2;
-    //         }
-    //     }
-    //     return swapLookup;
-    // }
-
-    template <size_t N>
-    constexpr std::array<uint, N> calc_swap_lookup(uint base)
+    template <size_t N, uint base>
+    constexpr std::array<uint, N> calc_swap_lookup()
     {
         //first create an array where every element value is reversed bits of the index
         std::array<uint, N> swapLookup {0};
         
         for (size_t i {0}; i < N; i++) {
-            swapLookup.at(i) = digit_reverse<N>(i, base);
+            swapLookup.at(i) = digit_reverse<N, base>(i);
         }
         //then go through one more time and for every pair, unreverse the one with the higher index
         //this prevents the swap from occuring twice, which would undo the swap
@@ -282,7 +242,7 @@ namespace sdsp
 
         //compile time calculations
         constexpr auto wCoeffs {calc_wCoeffs<N, T>()};
-        constexpr auto swapLookup {calc_swap_lookup<N>(2)};
+        constexpr auto swapLookup {calc_swap_lookup<N, 2>()};
 
         //decimation in time
         //perform swap on inputs
@@ -293,7 +253,6 @@ namespace sdsp
         }
 
         //outer most loop is the FFT stages
-        //2pt FFT -> 4pt FFT -> 8pt FFT -> etc
         for (uint i {0}; i < log2(N); i++) {
             uint two_raised_to_i {1u << i};
 
@@ -327,7 +286,7 @@ namespace sdsp
 
         //compile time calculations
         constexpr auto wCoeffs {calc_wCoeffs<N, T>()};
-        constexpr auto swapLookup {calc_swap_lookup<N>(4)};
+        constexpr auto swapLookup {calc_swap_lookup<N, 4>()};
         constexpr uint coeff_subscript {log2(N) - 1};
 
         for (uint i {0}; i < log4(N); i++) {

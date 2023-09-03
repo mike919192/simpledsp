@@ -1,5 +1,6 @@
 
-#include "catch2/catch_amalgamated.hpp"
+#define CATCH_CONFIG_MAIN
+#include "catch2/catch_all.hpp"
 #include "sdsp/fft.h"
 
 template <size_t N>

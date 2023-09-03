@@ -1,4 +1,3 @@
-test/catch2/catch_amalgamated.*
 .vscode/*
-*.o
-*.out
+build
+CMakeUserPresets.json

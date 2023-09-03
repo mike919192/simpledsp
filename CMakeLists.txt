@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(FFT)
+project(testFFT)
 
 find_package(Catch2 REQUIRED)
 

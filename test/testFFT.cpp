@@ -250,4 +250,7 @@ TEST_CASE("FFT benchmark", "[single-file]")
         sdsp::fft_radix4(complexValues);
         return complexValues;
     };
+
+    SUCCEED( "Benchmark placeholder assertion" );
+
 }

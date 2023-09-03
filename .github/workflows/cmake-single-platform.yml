@@ -26,9 +26,6 @@ jobs:
       id: conan
       uses: turtlebrowser/get-conan@main
 
-    - name: Conan version
-      run: echo "${{ steps.conan.outputs.version }}"
-
     - name: Create profile
       run: conan profile detect --force
 

@@ -51,30 +51,17 @@ namespace sdsp
     template <size_t N>
     using complex_array = std::array<std::complex<double>, N>;
 
-    template <size_t N>
-    constexpr trig_array<N> calc_cosines_naive()
+    template <size_t N, class T>
+    constexpr trig_array<N> calc_trigs_naive()
     {
-        trig_array<N> cosines {0};
-        for (size_t i {0}; i < cosines.size(); i++) {
-            uint pow2 {1u << i + 1u};
-            for (size_t j {0}; j < cosines.at(i).size(); j++) {
-                cosines.at(i).at(j) = std::cos(2 * M_PI * j / pow2);
+        trig_array<N> trigs {0};
+        for (size_t i {0}; i < trigs.size(); i++) {
+            uint pow2 {1u << (i + 1u)};
+            for (size_t j {0}; j < trigs.at(i).size(); j++) {
+                trigs.at(i).at(j) = T::Value(2 * M_PI * j / pow2);
             }
         }
-        return cosines;
-    }
-
-    template <size_t N>
-    constexpr trig_array<N> calc_sines_naive()
-    {
-        trig_array<N> sines {0};
-        for (size_t i {0}; i < sines.size(); i++) {
-            uint pow2 {1u << i + 1u};
-            for (size_t j {0}; j < sines.at(i).size(); j++) {
-                sines.at(i).at(j) = -std::sin(2 * M_PI * j / pow2);
-            }
-        }
-        return sines;
+        return trigs;
     }
 
     class sine_calculator
@@ -176,10 +163,10 @@ namespace sdsp
     template<size_t N, class T>
     constexpr coeff_array<N> calc_wCoeffs()
     {
-        //auto cosines = calc_cosines_naive<N>();
+        //auto cosines {calc_trigs_naive<N, cosine_calculator>()};
         auto cosines {calc_trigs<N, cosine_calculator>()};
         
-        //auto sines = calc_sines_naive<N>();
+        //auto sines = calc_trigs_naive<N, sine_calculator>();
         auto sines {calc_trigs<N, sine_calculator>()};
 
         coeff_array<N> wCoeffs {0};

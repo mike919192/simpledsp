@@ -228,8 +228,8 @@ namespace sdsp
         static_assert(isPowerOf2(N), "FFT size must be a power of 2!");
 
         //compile time calculations
-        constexpr auto wCoeffs {calc_wCoeffs<N, T>()};
-        constexpr auto swapLookup {calc_swap_lookup<N, 2>()};
+        constexpr static auto wCoeffs {calc_wCoeffs<N, T>()};
+        constexpr static auto swapLookup {calc_swap_lookup<N, 2>()};
 
         //decimation in time
         //perform swap on inputs
@@ -272,9 +272,9 @@ namespace sdsp
         static_assert(isPowerOf4(N), "FFT radix 4 size must be a power of 4!");
 
         //compile time calculations
-        constexpr auto wCoeffs {calc_wCoeffs<N, T>()};
-        constexpr auto swapLookup {calc_swap_lookup<N, 4>()};
-        constexpr uint coeff_subscript {log2(N) - 1};
+        constexpr static auto wCoeffs {calc_wCoeffs<N, T>()};
+        constexpr static auto swapLookup {calc_swap_lookup<N, 4>()};
+        constexpr static uint coeff_subscript {log2(N) - 1};
 
         for (uint i {0}; i < log4(N); i++) {
             uint i_group_size {static_cast<uint>(N) / (4u << (2u * i))};

@@ -59,7 +59,7 @@ namespace sdsp
                     y.at(j + 1).at(p) += y.at(j).at(d2) * a.at(j).at(j2) - y.at(j + 1).at(d2) * b.at(j).at(j2);
                 }
 
-                *begin = y.at(j).at(p) * 2; // Added a gain of 2 after the filter
+                *begin = y.at(j).at(p);
 
                 p++;
                 if (p > order)

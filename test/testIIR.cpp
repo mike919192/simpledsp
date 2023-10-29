@@ -91,7 +91,7 @@ TEST_CASE("Filter test", "[single-file]")
             lpFilter.SetLPCoeff(f0, fs);
             lpFilter.PreloadFilter(steadyValue);
             lpFilter.Process(steadyLP.begin(), steadyLP.end());
-            auto calcError = [steadyValue](double& n) { n = abs(n - steadyValue * 2.0); }; //filter has gain of 2
+            auto calcError = [steadyValue](double& n) { n = abs(n - steadyValue); };
             std::for_each(steadyLP.begin(), steadyLP.end(), calcError);
             double maxErrorLP = *std::max_element(steadyLP.begin(), steadyLP.end());
             REQUIRE(maxErrorLP < 1e-12);

@@ -8,7 +8,7 @@ namespace sdsp
     template <size_t M>
     class casc2orderIIR 
     {
-    public:
+    private:
         
         int pos {0};
         
@@ -18,6 +18,8 @@ namespace sdsp
 	    std::array<std::array<double, 3>, M> bCoeff {0};
 
         FilterType fType {FilterType::None};
+
+    public:
 
         casc2orderIIR()
         {

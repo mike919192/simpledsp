@@ -8,6 +8,6 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
 
-add_executable(${PROJECT_NAME} test/testFFT.cpp)
+add_executable(${PROJECT_NAME} test/testFFT.cpp test/testIIR.cpp)
 include_directories(include)
 target_link_libraries(${PROJECT_NAME} Catch2::Catch2WithMain)

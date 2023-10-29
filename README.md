@@ -8,9 +8,9 @@ Functions for DSP, mostly targeting real time application.
 
 ## Implemented
 - FFT (radix2 / radix4)
+- IIR (cascaded 2nd order)
 
 ## TODO
-- IIR filter
 - FIR filter
 - Others
 

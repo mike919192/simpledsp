@@ -7,7 +7,7 @@ find_package(Catch2 REQUIRED)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if ( CMAKE_COMPILER_IS_GNUCC )
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion")
 endif()
 
 add_executable(${PROJECT_NAME} ${test})

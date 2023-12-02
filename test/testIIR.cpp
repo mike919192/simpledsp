@@ -54,7 +54,7 @@ TEST_CASE("Filter test", "[single-file]")
             std::vector<double> error(readImpulse.size());
 
             for (size_t i = 0; i < error.size(); i++) {
-                error.at(i) = abs(data.at(i) - readImpulse.at(i));
+                error.at(i) = std::abs(data.at(i) - readImpulse.at(i));
             }
             double maxError = *std::max_element(error.begin(), error.end());
             REQUIRE(maxError < 1e-12);  //typically error 1e-16 or less
@@ -91,7 +91,7 @@ TEST_CASE("Filter test", "[single-file]")
             lpFilter.SetLPCoeff(f0, fs);
             lpFilter.PreloadFilter(steadyValue);
             lpFilter.Process(steadyLP.begin(), steadyLP.end());
-            auto calcError = [steadyValue](double& n) { n = abs(n - steadyValue); };
+            auto calcError = [steadyValue](double& n) { n = std::abs(n - steadyValue); };
             std::for_each(steadyLP.begin(), steadyLP.end(), calcError);
             double maxErrorLP = *std::max_element(steadyLP.begin(), steadyLP.end());
             REQUIRE(maxErrorLP < 1e-12);
@@ -104,7 +104,7 @@ TEST_CASE("Filter test", "[single-file]")
             hpFilter.SetHPCoeff(f0, fs);
             hpFilter.PreloadFilter(steadyValue);
             hpFilter.Process(steadyHP.begin(), steadyHP.end());
-            auto calcError = [](double& n) { n = abs(n); };
+            auto calcError = [](double& n) { n = std::abs(n); };
             std::for_each(steadyHP.begin(), steadyHP.end(), calcError);
             double maxErrorHP = *std::max_element(steadyHP.begin(), steadyHP.end());
             REQUIRE(maxErrorHP < 1e-12);
@@ -117,7 +117,7 @@ TEST_CASE("Filter test", "[single-file]")
             bpFilter.SetBPCoeff(f0, fs, Q);
             bpFilter.PreloadFilter(steadyValue);
             bpFilter.Process(steadyBP.begin(), steadyBP.end());
-            auto calcError = [](double& n) { n = abs(n); };
+            auto calcError = [](double& n) { n = std::abs(n); };
             std::for_each(steadyBP.begin(), steadyBP.end(), calcError);
             double maxErrorBP = *std::max_element(steadyBP.begin(), steadyBP.end());
             REQUIRE(maxErrorBP < 1e-12);

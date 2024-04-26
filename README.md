@@ -14,6 +14,9 @@ Functions for DSP, mostly targeting real time application.
 - FIR filter
 - Others
 
+## Notes
+- FFT coefficients are computed at compile time thanks to gcc extensions.
+
 ## Required to build tests
 - Conan2
 - CMake

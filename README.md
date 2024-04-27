@@ -11,6 +11,8 @@ Functions for DSP, mostly targeting real time application.
 - IIR (cascaded 2nd order)
 
 ## TODO
+- Documentation
+- IIR band stop filter type
 - FIR filter
 - Others
 

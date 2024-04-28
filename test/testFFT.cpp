@@ -21,7 +21,7 @@ TEST_CASE("FFT Radix 2 test", "[single-file]")
     sdsp::complex_array<N> s {0};
     
     for (size_t i = 0; i < s.size(); i++) {
-        s.at(i) = std::cos(n * 2 * M_PI * i / N);
+        s.at(i) = std::cos(n * 2 * M_PI * static_cast<double>(i) / N);
     }
 
     sdsp::complex_array<N> S {0};
@@ -52,7 +52,7 @@ TEST_CASE("FFT Radix 2 test", "[single-file]")
         sdsp::complex_array<N> s2 {0};
     
         for (size_t i {0}; i < s2.size(); i++) {
-            s2.at(i) = std::cos(n * 2 * M_PI * i / N + (M_PI / 2.0));
+            s2.at(i) = std::cos(n * 2 * M_PI * static_cast<double>(i) / N + (M_PI / 2.0));
         }
 
         sdsp::fft_radix2(s);
@@ -82,10 +82,10 @@ TEST_CASE("FFT Radix 2 linearity", "[single-file]")
     sdsp::complex_array<N> x1 {0};
     sdsp::complex_array<N> x2 {0};
     for (size_t i {0}; i < x1.size(); i++) {
-        double value {std::sin(2.0 * M_PI * freq1 * (1.0 / fs) * i)};
+        double value {std::sin(2.0 * M_PI * freq1 * (1.0 / fs) * static_cast<double>(i))};
         x1.at(i) = std::complex<double>(value, 0);
         
-        double value2 {std::sin(2.0 * M_PI * freq2 * (1.0 / fs) * i)};
+        double value2 {std::sin(2.0 * M_PI * freq2 * (1.0 / fs) * static_cast<double>(i))};
         x2.at(i) = std::complex<double>(value2, 0);
     }
 
@@ -131,7 +131,7 @@ TEST_CASE("FFT Radix 4 test", "[single-file]")
     sdsp::complex_array<N> s {0};
     
     for (size_t i {0}; i < s.size(); i++) {
-        s.at(i) = std::cos(n * 2 * M_PI * i / N);
+        s.at(i) = std::cos(n * 2 * M_PI * static_cast<double>(i) / N);
     }
 
     sdsp::complex_array<N> S {0};
@@ -162,7 +162,7 @@ TEST_CASE("FFT Radix 4 test", "[single-file]")
         sdsp::complex_array<N> s2 {0};
     
         for (size_t i {0}; i < s2.size(); i++) {
-            s2.at(i) = std::cos(n * 2 * M_PI * i / N + (M_PI / 2.0));
+            s2.at(i) = std::cos(n * 2 * M_PI * static_cast<double>(i) / N + (M_PI / 2.0));
         }
 
         sdsp::fft_radix4(s);
@@ -192,10 +192,10 @@ TEST_CASE("FFT Radix 4 linearity", "[single-file]")
     sdsp::complex_array<N> x1 {0};
     sdsp::complex_array<N> x2 {0};
     for (size_t i {0}; i < x1.size(); i++) {
-        double value {std::sin(2.0 * M_PI * freq1 * (1.0 / fs) * i)};
+        double value {std::sin(2.0 * M_PI * freq1 * (1.0 / fs) * static_cast<double>(i))};
         x1.at(i) = std::complex<double>(value, 0);
         
-        double value2 {std::sin(2.0 * M_PI * freq2 * (1.0 / fs) * i)};
+        double value2 {std::sin(2.0 * M_PI * freq2 * (1.0 / fs) * static_cast<double>(i))};
         x2.at(i) = std::complex<double>(value2, 0);
     }
 

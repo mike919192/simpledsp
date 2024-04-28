@@ -14,8 +14,8 @@ namespace sdsp
         
         std::array<std::array<double, 3>, M + 1> mem {0};
 
-	    std::array<std::array<double, 3>, M> aCoeff {0};
 	    std::array<std::array<double, 3>, M> bCoeff {0};
+	    std::array<std::array<double, 3>, M> aCoeff {0};
 
         FilterType fType {FilterType::None};
 
@@ -37,9 +37,9 @@ namespace sdsp
 
             std::array<std::array<double, 3>, M + 1> y = mem;
 
-            std::array<std::array<double, 3>, M> a = aCoeff;
-
             std::array<std::array<double, 3>, M> b = bCoeff;
+
+            std::array<std::array<double, 3>, M> a = aCoeff;
 
             while (begin < end) {
                 y.at(0).at(p) = *begin;
@@ -55,10 +55,10 @@ namespace sdsp
                 uint j;
 
                 for (j = 0; j < M; j++) {
-                    y.at(j + 1).at(p) = y.at(j).at(p) * a.at(j).at(0);
+                    y.at(j + 1).at(p) = y.at(j).at(p) * b.at(j).at(0);
 
-                    y.at(j + 1).at(p) += y.at(j).at(d1) * a.at(j).at(j1) - y.at(j + 1).at(d1) * b.at(j).at(j1);
-                    y.at(j + 1).at(p) += y.at(j).at(d2) * a.at(j).at(j2) - y.at(j + 1).at(d2) * b.at(j).at(j2);
+                    y.at(j + 1).at(p) += y.at(j).at(d1) * b.at(j).at(j1) - y.at(j + 1).at(d1) * a.at(j).at(j1);
+                    y.at(j + 1).at(p) += y.at(j).at(d2) * b.at(j).at(j2) - y.at(j + 1).at(d2) * a.at(j).at(j2);
                 }
 
                 *begin = y.at(j).at(p);
@@ -111,19 +111,19 @@ namespace sdsp
                 double alpha1 {(0.5 - beta1) * t / 2.0};
                 double alpha2 {(0.5 - beta2) * t / 2.0};
 
-                aCoeff.at(2 * k).at(0) = 2 * alpha1;
-                aCoeff.at(2 * k + 1).at(0) = 2 * alpha2;
-                aCoeff.at(2 * k).at(1) = 0;
-                aCoeff.at(2 * k + 1).at(1) = 0;
-                aCoeff.at(2 * k).at(2) = -aCoeff.at(2 * k).at(0);
-                aCoeff.at(2 * k + 1).at(2) = -aCoeff.at(2 * k + 1).at(0);
+                bCoeff.at(2 * k).at(0) = 2 * alpha1;
+                bCoeff.at(2 * k + 1).at(0) = 2 * alpha2;
+                bCoeff.at(2 * k).at(1) = 0;
+                bCoeff.at(2 * k + 1).at(1) = 0;
+                bCoeff.at(2 * k).at(2) = -bCoeff.at(2 * k).at(0);
+                bCoeff.at(2 * k + 1).at(2) = -bCoeff.at(2 * k + 1).at(0);
 
-                bCoeff.at(2 * k).at(0) = 1;
-                bCoeff.at(2 * k + 1).at(0) = 1;
-                bCoeff.at(2 * k).at(1) = -2 * gamma1;
-                bCoeff.at(2 * k + 1).at(1) = -2 * gamma2;
-                bCoeff.at(2 * k).at(2) = 2 * beta1;
-                bCoeff.at(2 * k + 1).at(2) = 2 * beta2;
+                aCoeff.at(2 * k).at(0) = 1;
+                aCoeff.at(2 * k + 1).at(0) = 1;
+                aCoeff.at(2 * k).at(1) = -2 * gamma1;
+                aCoeff.at(2 * k + 1).at(1) = -2 * gamma2;
+                aCoeff.at(2 * k).at(2) = 2 * beta1;
+                aCoeff.at(2 * k + 1).at(2) = 2 * beta2;
             }
         }
         
@@ -142,13 +142,13 @@ namespace sdsp
                 double gamma1 {(0.5 + beta1) * std::cos(e0)};
                 double alpha1 {(0.5 + beta1 + gamma1) / 4}; //-
 
-                aCoeff.at(k).at(0) = 2 * alpha1;
-                aCoeff.at(k).at(1) = -2 * aCoeff.at(k).at(0); //-
-                aCoeff.at(k).at(2) = aCoeff.at(k).at(0);
+                bCoeff.at(k).at(0) = 2 * alpha1;
+                bCoeff.at(k).at(1) = -2 * bCoeff.at(k).at(0); //-
+                bCoeff.at(k).at(2) = bCoeff.at(k).at(0);
 
-                bCoeff.at(k).at(0) = 1;
-                bCoeff.at(k).at(1) = -2 * gamma1;
-                bCoeff.at(k).at(2) = 2 * beta1;
+                aCoeff.at(k).at(0) = 1;
+                aCoeff.at(k).at(1) = -2 * gamma1;
+                aCoeff.at(k).at(2) = 2 * beta1;
             }
         }
         
@@ -167,13 +167,13 @@ namespace sdsp
                 double gamma1 {(0.5 + beta1) * std::cos(e0)};
                 double alpha1 {(0.5 + beta1 - gamma1) / 4};
 
-                aCoeff.at(k).at(0) = 2 * alpha1;
-                aCoeff.at(k).at(1) = 2 * aCoeff.at(k).at(0);
-                aCoeff.at(k).at(2) = aCoeff.at(k).at(0);
+                bCoeff.at(k).at(0) = 2 * alpha1;
+                bCoeff.at(k).at(1) = 2 * bCoeff.at(k).at(0);
+                bCoeff.at(k).at(2) = bCoeff.at(k).at(0);
 
-                bCoeff.at(k).at(0) = 1;
-                bCoeff.at(k).at(1) = -2 * gamma1;
-                bCoeff.at(k).at(2) = 2 * beta1;
+                aCoeff.at(k).at(0) = 1;
+                aCoeff.at(k).at(1) = -2 * gamma1;
+                aCoeff.at(k).at(2) = 2 * beta1;
             }
         }
         

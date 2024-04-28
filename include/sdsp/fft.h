@@ -209,7 +209,7 @@ namespace sdsp
         std::array<uint, N> swapLookup {0};
         
         for (size_t i {0}; i < N; i++) {
-            swapLookup.at(i) = digit_reverse<N, base>(i);
+            swapLookup.at(i) = digit_reverse<N, base>(static_cast<uint>(i));
         }
         //then go through one more time and for every pair, unreverse the one with the higher index
         //this prevents the swap from occuring twice, which would undo the swap

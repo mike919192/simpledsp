@@ -194,4 +194,101 @@ namespace sdsp
             mem = memVals;
         }
     };
+
+    template<size_t M>
+    class casc2orderIIR_LP
+    {
+    private:
+        
+        int pos {0};
+
+        double gain {1.0};
+        
+        std::array<std::array<double, 3>, M + 1> mem {0};
+
+	    std::array<std::array<double, 3>, M> bCoeff {0};
+	    std::array<std::array<double, 3>, M> aCoeff {0};
+
+        FilterType fType {FilterType::None};
+
+    public:
+
+        casc2orderIIR_LP()
+        {
+            static_assert(M % 2 == 0, "M must be even!");
+        }
+
+        template <typename Iter>
+        void Process(Iter begin, Iter end) 
+        {
+            constexpr int order {2};
+            constexpr int j1 {1};
+            constexpr int j2 {2};
+
+            int p {pos};
+
+            std::array<std::array<double, 3>, M + 1> y = mem;
+
+            //std::array<std::array<double, 3>, M> b = bCoeff;
+
+            std::array<std::array<double, 3>, M> a = aCoeff;
+
+            while (begin < end) {
+                y.at(0).at(p) = *begin * gain;
+
+                int d1 {p - j1};
+                if (d1 < 0)
+                    d1 += order + 1;
+
+                int d2 {p - j2};
+                if (d2 < 0)
+                    d2 += order + 1;
+
+                uint j {0};
+
+                for (j = 0; j < M; j++) {
+                    y.at(j + 1).at(p) = y.at(j).at(p);
+
+                    y.at(j + 1).at(p) += y.at(j).at(d1) + y.at(j).at(d1) - y.at(j + 1).at(d1) * a.at(j).at(j1);
+                    y.at(j + 1).at(p) += y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(j2);
+                }
+
+                *begin = y.at(j).at(p);
+
+                p++;
+                if (p > order)
+                    p = 0;
+                begin++;
+            }
+            pos = p;
+            mem = y;
+        }
+
+        void SetLPCoeff(double f0, double fs, double gainIn = 1.0) 
+        {
+            fType = FilterType::LowPass;
+            gain = gainIn;
+
+            double e0 {2 * M_PI * f0 / fs};
+            for (unsigned int k = 0; k < M; k++) {
+                double dk {2 * std::sin((2 * k + 1) * M_PI / (4.0 * M))};
+
+                double t {dk * std::sin(e0) / 2};
+                double dnm {1 + t};
+                
+                double beta1 {(1 - t) / dnm / 2};
+                double gamma1 {(0.5 + beta1) * std::cos(e0)};
+                double alpha1 {(0.5 + beta1 - gamma1) / 4};
+
+                gain *= 2 * alpha1;
+                //bCoeff.at(k).at(0) = 1.0;
+                //bCoeff.at(k).at(1) = 2.0;
+                //bCoeff.at(k).at(2) = 1.0;
+
+                aCoeff.at(k).at(0) = 1;
+                aCoeff.at(k).at(1) = -2 * gamma1;
+                aCoeff.at(k).at(2) = 2 * beta1;
+            }
+        }
+    };
 }

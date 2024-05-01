@@ -77,6 +77,84 @@ TEST_CASE("Filter test", "[single-file]")
         }
     }
 
+    SECTION("Test impulse response of LP specialized") 
+    {
+        std::string path = "../../../test_data/impulse_response";
+        for (const auto & entry : std::filesystem::directory_iterator(path)) {
+
+            if (entry.path().filename().string().starts_with("LP") == false)
+                continue;
+            
+            auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
+            sdsp::casc2orderIIR_LP<4> df;
+
+            if (fType == sdsp::FilterType::LowPass) {
+                df.SetLPCoeff(f0, fs);
+            } else {
+                throw std::runtime_error("Unknown filter type");
+            }
+            sdsp::casc2orderIIR_LP<4> df2 = df;    
+            std::vector<double> data(readImpulse.size());
+            data.at(0) = 1.0;
+            df.Process(data.begin(), data.end());
+            
+            std::vector<double> error(readImpulse.size());
+
+            for (size_t i = 0; i < error.size(); i++) {
+                error.at(i) = std::abs(data.at(i) - readImpulse.at(i));
+            }
+            double maxError = *std::max_element(error.begin(), error.end());
+            REQUIRE(maxError < 1e-12);  //typically error 1e-16 or less
+
+            //also check that we can process in blocks and get the same result
+            std::vector<double> data2(readImpulse.size());
+            data2.at(0) = 1.0;
+
+            constexpr unsigned int blockSize {32};
+            unsigned int index {0};
+            for (index = 0; index <= data2.size() - blockSize; index += blockSize) {
+                df2.Process(std::next(data2.begin(), index), std::next(data2.begin(), index + blockSize));
+            }
+
+            if (index < data2.size()) {
+                df2.Process(std::next(data2.begin(), index), data2.end());
+            }
+
+            REQUIRE(data == data2);
+        }
+    }
+
+    SECTION("Test the filter gain")
+    {
+        constexpr double fs {100e3};
+        constexpr double f0 {10e3};
+
+        std::array<double, 1024> impulse1 {0};
+        impulse1.at(0) = 1.0;
+        std::array<double, 1024> impulse2 {0};
+        impulse2.at(0) = 1.0;
+
+        sdsp::casc2orderIIR_LP<4> df;
+        df.SetLPCoeff(f0, fs);
+
+        sdsp::casc2orderIIR_LP<4> df2;
+        df2.SetLPCoeff(f0, fs, 2.0);
+
+        df.Process(impulse1.begin(), impulse1.end());
+        df2.Process(impulse2.begin(), impulse2.end());
+
+        auto times_two = [](double& n) { n = 2.0 * n; };
+        std::for_each(impulse1.begin(), impulse1.end(), times_two);
+
+        std::array<double, 1024> error {0};
+
+        for (size_t i = 0; i < error.size(); i++) {
+            error.at(i) = std::abs(impulse1.at(i) - impulse2.at(i));
+        }
+        double maxError = *std::max_element(error.begin(), error.end());
+        REQUIRE(maxError < 1e-12);
+    }
+
     SECTION("Test filter preload") 
     {
         constexpr double fs {100e3};
@@ -129,10 +207,13 @@ TEST_CASE("Filter test", "[single-file]")
     {
         constexpr double fs {100e3};
         constexpr double f0 {10e3};
-        constexpr double Q {1.1};
+        //constexpr double Q {1.1};
         
         sdsp::casc2orderIIR<4> df;
-        df.SetBPCoeff(f0, fs, Q);
+        df.SetLPCoeff(f0, fs);
+
+        sdsp::casc2orderIIR_LP<4> df2;
+        df2.SetLPCoeff(f0, fs);
 
         std::array<double, 4096> data {0.0};
         data.at(0) = 1.0;        
@@ -140,6 +221,12 @@ TEST_CASE("Filter test", "[single-file]")
         BENCHMARK("Filter benchmark")
         {
             df.Process(data.begin(), data.end());
+            return data;
+        };
+
+        BENCHMARK("Filter2 benchmark")
+        {
+            df2.Process(data.begin(), data.end());
             return data;
         };
         SUCCEED();

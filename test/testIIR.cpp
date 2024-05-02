@@ -233,6 +233,85 @@ TEST_CASE("Filter test", "[single-file]")
         REQUIRE(maxError < 1e-12);
     }
 
+    SECTION("Test impulse response of BP specialized") 
+    {
+        std::string path = "../../../test_data/impulse_response";
+        for (const auto & entry : std::filesystem::directory_iterator(path)) {
+
+            if (entry.path().filename().string().starts_with("BP") == false)
+                continue;
+            
+            auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
+            sdsp::casc_2o_IIR_bp<4> df;
+
+            if (fType == sdsp::FilterType::BandPass) {
+                df.set_coeff(f0, fs, Q);
+            } else {
+                throw std::runtime_error("Unknown filter type");
+            }
+            sdsp::casc_2o_IIR_bp<4> df2 = df;    
+            std::vector<double> data(readImpulse.size());
+            data.at(0) = 1.0;
+            df.process(data.begin(), data.end());
+            
+            std::vector<double> error(readImpulse.size());
+
+            for (size_t i = 0; i < error.size(); i++) {
+                error.at(i) = std::abs(data.at(i) - readImpulse.at(i));
+            }
+            double maxError = *std::max_element(error.begin(), error.end());
+            REQUIRE(maxError < 1e-12);  //typically error 1e-16 or less
+
+            //also check that we can process in blocks and get the same result
+            std::vector<double> data2(readImpulse.size());
+            data2.at(0) = 1.0;
+
+            constexpr unsigned int blockSize {32};
+            unsigned int index {0};
+            for (index = 0; index <= data2.size() - blockSize; index += blockSize) {
+                df2.process(std::next(data2.begin(), index), std::next(data2.begin(), index + blockSize));
+            }
+
+            if (index < data2.size()) {
+                df2.process(std::next(data2.begin(), index), data2.end());
+            }
+
+            REQUIRE(data == data2);
+        }
+    }
+
+    SECTION("Test the BP filter gain")
+    {
+        constexpr double fs {100e3};
+        constexpr double f0 {10e3};
+        constexpr double Q {1.1};
+
+        std::array<double, 1024> impulse1 {0};
+        impulse1.at(0) = 1.0;
+        std::array<double, 1024> impulse2 {0};
+        impulse2.at(0) = 1.0;
+
+        sdsp::casc_2o_IIR_bp<4> df;
+        df.set_coeff(f0, fs, Q);
+
+        sdsp::casc_2o_IIR_bp<4> df2;
+        df2.set_coeff(f0, fs, Q, 2.0);
+
+        df.process(impulse1.begin(), impulse1.end());
+        df2.process(impulse2.begin(), impulse2.end());
+
+        auto times_two = [](double& n) { n = 2.0 * n; };
+        std::for_each(impulse1.begin(), impulse1.end(), times_two);
+
+        std::array<double, 1024> error {0};
+
+        for (size_t i = 0; i < error.size(); i++) {
+            error.at(i) = std::abs(impulse1.at(i) - impulse2.at(i));
+        }
+        double maxError = *std::max_element(error.begin(), error.end());
+        REQUIRE(maxError < 1e-12);
+    }
+
     SECTION("Test filter preload") 
     {
         constexpr double fs {100e3};
@@ -332,6 +411,35 @@ TEST_CASE("Filter test", "[single-file]")
         };
 
         BENCHMARK("Specialized HP filter benchmark")
+        {
+            df2.process(data.begin(), data.end());
+            return data;
+        };
+        SUCCEED();
+    }
+
+    SECTION("BP Filter benchmark section")
+    {
+        constexpr double fs {100e3};
+        constexpr double f0 {10e3};
+        constexpr double Q {1.1};
+        
+        sdsp::casc2orderIIR<4> df;
+        df.SetBPCoeff(f0, fs, Q);
+
+        sdsp::casc_2o_IIR_bp<4> df2;
+        df2.set_coeff(f0, fs, Q);
+
+        std::array<double, 4096> data {0.0};
+        data.at(0) = 1.0;        
+
+        BENCHMARK("Runtime configurable BP filter benchmark")
+        {
+            df.Process(data.begin(), data.end());
+            return data;
+        };
+
+        BENCHMARK("Specialized BP filter benchmark")
         {
             df2.process(data.begin(), data.end());
             return data;

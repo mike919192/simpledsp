@@ -1,0 +1,8 @@
+﻿---
+BasedOnStyle: Mozilla
+AccessModifierOffset: '-4'
+BinPackArguments: true
+BinPackParameters: true
+IndentWidth: '4'
+
+...

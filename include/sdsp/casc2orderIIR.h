@@ -1,483 +1,431 @@
 #pragma once
+#include "FilterType.h"
 #include <array>
 #include <cmath>
-#include "FilterType.h"
 
-namespace sdsp
+namespace sdsp {
+template<size_t M>
+class casc2orderIIR
 {
-    template <size_t M>
-    class casc2orderIIR 
+private:
+    int pos{ 0 };
+
+    std::array<std::array<double, 3>, M + 1> mem{ 0 };
+
+    std::array<std::array<double, 3>, M> bCoeff{ 0 };
+    std::array<std::array<double, 3>, M> aCoeff{ 0 };
+
+    FilterType fType{ FilterType::None };
+
+public:
+    casc2orderIIR() { static_assert(M % 2 == 0, "M must be even!"); }
+
+    template<typename Iter>
+    void Process(Iter begin, Iter end)
     {
-    private:
-        
-        int pos {0};
-        
-        std::array<std::array<double, 3>, M + 1> mem {0};
+        constexpr int order{ 2 };
+        constexpr int j1{ 1 };
+        constexpr int j2{ 2 };
 
-	    std::array<std::array<double, 3>, M> bCoeff {0};
-	    std::array<std::array<double, 3>, M> aCoeff {0};
+        int p{ pos };
 
-        FilterType fType {FilterType::None};
+        std::array<std::array<double, 3>, M + 1> y = mem;
 
-    public:
+        std::array<std::array<double, 3>, M> b = bCoeff;
 
-        casc2orderIIR()
-        {
-            static_assert(M % 2 == 0, "M must be even!");
-        }
+        std::array<std::array<double, 3>, M> a = aCoeff;
 
-        template <typename Iter>
-        void Process(Iter begin, Iter end) 
-        {
-            constexpr int order {2};
-            constexpr int j1 {1};
-            constexpr int j2 {2};
+        while (begin < end) {
+            y.at(0).at(p) = *begin;
 
-            int p {pos};
+            int d1{ p - j1 };
+            if (d1 < 0)
+                d1 += order + 1;
 
-            std::array<std::array<double, 3>, M + 1> y = mem;
+            int d2{ p - j2 };
+            if (d2 < 0)
+                d2 += order + 1;
 
-            std::array<std::array<double, 3>, M> b = bCoeff;
+            uint j;
 
-            std::array<std::array<double, 3>, M> a = aCoeff;
+            for (j = 0; j < M; j++) {
+                y.at(j + 1).at(p) = y.at(j).at(p) * b.at(j).at(0);
 
-            while (begin < end) {
-                y.at(0).at(p) = *begin;
-
-                int d1 {p - j1};
-                if (d1 < 0)
-                    d1 += order + 1;
-
-                int d2 {p - j2};
-                if (d2 < 0)
-                    d2 += order + 1;
-
-                uint j;
-
-                for (j = 0; j < M; j++) {
-                    y.at(j + 1).at(p) = y.at(j).at(p) * b.at(j).at(0);
-
-                    y.at(j + 1).at(p) += y.at(j).at(d1) * b.at(j).at(j1) - y.at(j + 1).at(d1) * a.at(j).at(j1);
-                    y.at(j + 1).at(p) += y.at(j).at(d2) * b.at(j).at(j2) - y.at(j + 1).at(d2) * a.at(j).at(j2);
-                }
-
-                *begin = y.at(j).at(p);
-
-                p++;
-                if (p > order)
-                    p = 0;
-                begin++;
+                y.at(j + 1).at(p) += y.at(j).at(d1) * b.at(j).at(j1) -
+                                     y.at(j + 1).at(d1) * a.at(j).at(j1);
+                y.at(j + 1).at(p) += y.at(j).at(d2) * b.at(j).at(j2) -
+                                     y.at(j + 1).at(d2) * a.at(j).at(j2);
             }
-            pos = p;
-            mem = y;
+
+            *begin = y.at(j).at(p);
+
+            p++;
+            if (p > order)
+                p = 0;
+            begin++;
         }
-        
-        void SetBPCoeff(double f0, double fs, double Q) 
-        {
-            double q2 {2 * Q};
-            fType = FilterType::BandPass;
+        pos = p;
+        mem = y;
+    }
 
-            double e0 {2 * M_PI * f0 / fs};
-            double dnm {std::sin(e0)};
-            
-            double de {2 * std::tan(e0 / q2) / dnm};
-            
-            for (unsigned int k = 0; k < M / 2; k++) {
-                double D {2 * std::sin((2 * k + 1) * M_PI / (2.0 * M))};
-                
-                double A {(1 + de * de / 4.0) * 2 / D / de};
-                double dk {std::sqrt(de * D / (A + std::sqrt(A * A - 1)))};
-                
-                double B {D * de / dk / 2.0};
-                double W {B + std::sqrt(B * B - 1)};
-                
-                double t {std::tan(e0 / 2.0)};
-                
-                double e1 {2.0 * std::atan(t / W)};
-                double e2 {2.0 * std::atan(W * t)};
+    void SetBPCoeff(double f0, double fs, double Q)
+    {
+        double q2{ 2 * Q };
+        fType = FilterType::BandPass;
 
-                t = dk * std::sin(e1) / 2.0;
-                dnm = (1 + t);
-                double beta1 {(1 - t) / dnm / 2.0};
+        double e0{ 2 * M_PI * f0 / fs };
+        double dnm{ std::sin(e0) };
 
-                t = dk * std::sin(e2) / 2.0;
-                dnm = (1 + t);
-                double beta2 {(1 - t) / dnm / 2.0};
+        double de{ 2 * std::tan(e0 / q2) / dnm };
 
-                double gamma1 {(0.5 + beta1) * std::cos(e1)};
-                double gamma2 {(0.5 + beta2) * std::cos(e2)};
+        for (unsigned int k = 0; k < M / 2; k++) {
+            double D{ 2 * std::sin((2 * k + 1) * M_PI / (2.0 * M)) };
 
-                t = std::sqrt(1 + (W - 1 / W) / dk * (W - 1 / W) / dk);
-                double alpha1 {(0.5 - beta1) * t / 2.0};
-                double alpha2 {(0.5 - beta2) * t / 2.0};
+            double A{ (1 + de * de / 4.0) * 2 / D / de };
+            double dk{ std::sqrt(de * D / (A + std::sqrt(A * A - 1))) };
 
-                bCoeff.at(2 * k).at(0) = 2 * alpha1;
-                bCoeff.at(2 * k + 1).at(0) = 2 * alpha2;
-                bCoeff.at(2 * k).at(1) = 0;
-                bCoeff.at(2 * k + 1).at(1) = 0;
-                bCoeff.at(2 * k).at(2) = -bCoeff.at(2 * k).at(0);
-                bCoeff.at(2 * k + 1).at(2) = -bCoeff.at(2 * k + 1).at(0);
+            double B{ D * de / dk / 2.0 };
+            double W{ B + std::sqrt(B * B - 1) };
 
-                aCoeff.at(2 * k).at(0) = 1;
-                aCoeff.at(2 * k + 1).at(0) = 1;
-                aCoeff.at(2 * k).at(1) = -2 * gamma1;
-                aCoeff.at(2 * k + 1).at(1) = -2 * gamma2;
-                aCoeff.at(2 * k).at(2) = 2 * beta1;
-                aCoeff.at(2 * k + 1).at(2) = 2 * beta2;
-            }
+            double t{ std::tan(e0 / 2.0) };
+
+            double e1{ 2.0 * std::atan(t / W) };
+            double e2{ 2.0 * std::atan(W * t) };
+
+            t = dk * std::sin(e1) / 2.0;
+            dnm = (1 + t);
+            double beta1{ (1 - t) / dnm / 2.0 };
+
+            t = dk * std::sin(e2) / 2.0;
+            dnm = (1 + t);
+            double beta2{ (1 - t) / dnm / 2.0 };
+
+            double gamma1{ (0.5 + beta1) * std::cos(e1) };
+            double gamma2{ (0.5 + beta2) * std::cos(e2) };
+
+            t = std::sqrt(1 + (W - 1 / W) / dk * (W - 1 / W) / dk);
+            double alpha1{ (0.5 - beta1) * t / 2.0 };
+            double alpha2{ (0.5 - beta2) * t / 2.0 };
+
+            bCoeff.at(2 * k).at(0) = 2 * alpha1;
+            bCoeff.at(2 * k + 1).at(0) = 2 * alpha2;
+            bCoeff.at(2 * k).at(1) = 0;
+            bCoeff.at(2 * k + 1).at(1) = 0;
+            bCoeff.at(2 * k).at(2) = -bCoeff.at(2 * k).at(0);
+            bCoeff.at(2 * k + 1).at(2) = -bCoeff.at(2 * k + 1).at(0);
+
+            aCoeff.at(2 * k).at(0) = 1;
+            aCoeff.at(2 * k + 1).at(0) = 1;
+            aCoeff.at(2 * k).at(1) = -2 * gamma1;
+            aCoeff.at(2 * k + 1).at(1) = -2 * gamma2;
+            aCoeff.at(2 * k).at(2) = 2 * beta1;
+            aCoeff.at(2 * k + 1).at(2) = 2 * beta2;
         }
-        
-        void SetHPCoeff(double f0, double fs) 
-        {
-            fType = FilterType::HighPass;
-            
-            double e0 {2 * M_PI * f0 / fs};
-            for (unsigned int k = 0; k < M; k++) {
-                double dk {2 * std::sin((2 * k + 1) * M_PI / (4.0 * M))};
+    }
 
-                double t {dk * std::sin(e0) / 2};
-                double dnm {1 + t};
-                
-                double beta1 {(1 - t) / dnm / 2};
-                double gamma1 {(0.5 + beta1) * std::cos(e0)};
-                double alpha1 {(0.5 + beta1 + gamma1) / 4}; //-
+    void SetHPCoeff(double f0, double fs)
+    {
+        fType = FilterType::HighPass;
 
-                bCoeff.at(k).at(0) = 2 * alpha1;
-                bCoeff.at(k).at(1) = -2 * bCoeff.at(k).at(0); //-
-                bCoeff.at(k).at(2) = bCoeff.at(k).at(0);
+        double e0{ 2 * M_PI * f0 / fs };
+        for (unsigned int k = 0; k < M; k++) {
+            double dk{ 2 * std::sin((2 * k + 1) * M_PI / (4.0 * M)) };
 
-                aCoeff.at(k).at(0) = 1;
-                aCoeff.at(k).at(1) = -2 * gamma1;
-                aCoeff.at(k).at(2) = 2 * beta1;
-            }
+            double t{ dk * std::sin(e0) / 2 };
+            double dnm{ 1 + t };
+
+            double beta1{ (1 - t) / dnm / 2 };
+            double gamma1{ (0.5 + beta1) * std::cos(e0) };
+            double alpha1{ (0.5 + beta1 + gamma1) / 4 }; //-
+
+            bCoeff.at(k).at(0) = 2 * alpha1;
+            bCoeff.at(k).at(1) = -2 * bCoeff.at(k).at(0); //-
+            bCoeff.at(k).at(2) = bCoeff.at(k).at(0);
+
+            aCoeff.at(k).at(0) = 1;
+            aCoeff.at(k).at(1) = -2 * gamma1;
+            aCoeff.at(k).at(2) = 2 * beta1;
         }
-        
-        void SetLPCoeff(double f0, double fs) 
-        {
-            fType = FilterType::LowPass;
+    }
 
-            double e0 {2 * M_PI * f0 / fs};
-            for (unsigned int k = 0; k < M; k++) {
-                double dk {2 * std::sin((2 * k + 1) * M_PI / (4.0 * M))};
+    void SetLPCoeff(double f0, double fs)
+    {
+        fType = FilterType::LowPass;
 
-                double t {dk * std::sin(e0) / 2};
-                double dnm {1 + t};
-                
-                double beta1 {(1 - t) / dnm / 2};
-                double gamma1 {(0.5 + beta1) * std::cos(e0)};
-                double alpha1 {(0.5 + beta1 - gamma1) / 4};
+        double e0{ 2 * M_PI * f0 / fs };
+        for (unsigned int k = 0; k < M; k++) {
+            double dk{ 2 * std::sin((2 * k + 1) * M_PI / (4.0 * M)) };
 
-                bCoeff.at(k).at(0) = 2 * alpha1;
-                bCoeff.at(k).at(1) = 2 * bCoeff.at(k).at(0);
-                bCoeff.at(k).at(2) = bCoeff.at(k).at(0);
+            double t{ dk * std::sin(e0) / 2 };
+            double dnm{ 1 + t };
 
-                aCoeff.at(k).at(0) = 1;
-                aCoeff.at(k).at(1) = -2 * gamma1;
-                aCoeff.at(k).at(2) = 2 * beta1;
-            }
+            double beta1{ (1 - t) / dnm / 2 };
+            double gamma1{ (0.5 + beta1) * std::cos(e0) };
+            double alpha1{ (0.5 + beta1 - gamma1) / 4 };
+
+            bCoeff.at(k).at(0) = 2 * alpha1;
+            bCoeff.at(k).at(1) = 2 * bCoeff.at(k).at(0);
+            bCoeff.at(k).at(2) = bCoeff.at(k).at(0);
+
+            aCoeff.at(k).at(0) = 1;
+            aCoeff.at(k).at(1) = -2 * gamma1;
+            aCoeff.at(k).at(2) = 2 * beta1;
         }
-        
-        //preload the filter memory for steady state input equal to value parameter
-        void PreloadFilter(double value)
-        {
-            std::array<std::array<double, 3>, M + 1> memVals {0};
-            for (int i = 0; i < 3; i++) {
-                memVals.at(0).at(i) = value;
-            }
-            if (fType == FilterType::LowPass) {
-                for (uint j = 1; j < M + 1; j++) {
-                    for (uint i = 0; i < 3; i++) {
-                        memVals.at(j).at(i) = value;
-                    }
+    }
+
+    // preload the filter memory for steady state input equal to value parameter
+    void PreloadFilter(double value)
+    {
+        std::array<std::array<double, 3>, M + 1> memVals{ 0 };
+        for (int i = 0; i < 3; i++) {
+            memVals.at(0).at(i) = value;
+        }
+        if (fType == FilterType::LowPass) {
+            for (uint j = 1; j < M + 1; j++) {
+                for (uint i = 0; i < 3; i++) {
+                    memVals.at(j).at(i) = value;
                 }
             }
-            mem = memVals;
         }
-    };
+        mem = memVals;
+    }
+};
 
-    template<size_t M>
-    class casc_2o_IIR
+template<size_t M>
+class casc_2o_IIR
+{
+protected:
+    int pos{ 0 };
+
+    double gain{ 1.0 };
+
+    std::array<std::array<double, 3>, M + 1> mem{ 0 };
+
+    std::array<std::array<double, 3>, M> aCoeff{ 0 };
+
+    template<typename T, typename Iter>
+    void process_base(Iter begin, Iter end)
     {
-        protected:
-        int pos {0};
+        constexpr int order{ 2 };
+        constexpr int j1{ 1 };
+        constexpr int j2{ 2 };
 
-        double gain {1.0};
-        
-        std::array<std::array<double, 3>, M + 1> mem {0};
-        
-	    std::array<std::array<double, 3>, M> aCoeff {0};
-    };
+        int p{ pos };
 
-    template<size_t M>
-    class casc_2o_IIR_lp : casc_2o_IIR<M>
+        std::array<std::array<double, 3>, M + 1> y = mem;
+
+        std::array<std::array<double, 3>, M> a = aCoeff;
+
+        while (begin < end) {
+            y.at(0).at(p) = *begin * gain;
+
+            int d1{ p - j1 };
+            if (d1 < 0)
+                d1 += order + 1;
+
+            int d2{ p - j2 };
+            if (d2 < 0)
+                d2 += order + 1;
+
+            T::process_spec(y, a, p, d1, d2);
+
+            *begin = y.at(M).at(p);
+
+            p++;
+            if (p > order)
+                p = 0;
+            begin++;
+        }
+        pos = p;
+        mem = y;
+    }
+};
+
+template<size_t M>
+class casc_2o_IIR_lp : casc_2o_IIR<M>
+{
+public:
+    casc_2o_IIR_lp() { static_assert(M % 2 == 0, "M must be even!"); }
+
+    template<typename Iter>
+    void process(Iter begin, Iter end)
     {
-    public:
+        this->template process_base<casc_2o_IIR_lp<M>>(begin, end);
+    }
 
-        casc_2o_IIR_lp()
-        {
-            static_assert(M % 2 == 0, "M must be even!");
-        }
-
-        template <typename Iter>
-        void process(Iter begin, Iter end) 
-        {
-            constexpr int order {2};
-            constexpr int j1 {1};
-            constexpr int j2 {2};
-
-            int p {this->pos};
-
-            std::array<std::array<double, 3>, M + 1> y = this->mem;
-
-            std::array<std::array<double, 3>, M> a = this->aCoeff;
-
-            while (begin < end) {
-                y.at(0).at(p) = *begin * this->gain;
-
-                int d1 {p - j1};
-                if (d1 < 0)
-                    d1 += order + 1;
-
-                int d2 {p - j2};
-                if (d2 < 0)
-                    d2 += order + 1;
-
-                uint j {0};
-
-                for (j = 0; j < M; j++) {
-                    y.at(j + 1).at(p) = y.at(j).at(p);
-
-                    y.at(j + 1).at(p) += y.at(j).at(d1) + y.at(j).at(d1) - y.at(j + 1).at(d1) * a.at(j).at(j1);
-                    y.at(j + 1).at(p) += y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(j2);
-                }
-
-                *begin = y.at(j).at(p);
-
-                p++;
-                if (p > order)
-                    p = 0;
-                begin++;
-            }
-            this->pos = p;
-            this->mem = y;
-        }
-
-        void set_coeff(double f0, double fs, double gainIn = 1.0) 
-        {
-            this->gain = gainIn;
-
-            double e0 {2 * M_PI * f0 / fs};
-            for (unsigned int k = 0; k < M; k++) {
-                double dk {2 * std::sin((2 * k + 1) * M_PI / (4.0 * M))};
-
-                double t {dk * std::sin(e0) / 2};
-                double dnm {1 + t};
-                
-                double beta1 {(1 - t) / dnm / 2};
-                double gamma1 {(0.5 + beta1) * std::cos(e0)};
-                double alpha1 {(0.5 + beta1 - gamma1) / 4};
-
-                this->gain *= 2 * alpha1;
-                //bCoeff.at(k).at(0) = 1.0;
-                //bCoeff.at(k).at(1) = 2.0;
-                //bCoeff.at(k).at(2) = 1.0;
-
-                this->aCoeff.at(k).at(0) = 1;
-                this->aCoeff.at(k).at(1) = -2 * gamma1;
-                this->aCoeff.at(k).at(2) = 2 * beta1;
-            }
-        }
-    };
-
-    template<size_t M>
-    class casc_2o_IIR_hp : casc_2o_IIR<M>
+    static void process_spec(std::array<std::array<double, 3>, M + 1>& y,
+                             const std::array<std::array<double, 3>, M>& a,
+                             int p, int d1, int d2)
     {
-    public:
+        for (uint j = 0; j < M; j++) {
+            y.at(j + 1).at(p) = y.at(j).at(p);
 
-        casc_2o_IIR_hp()
-        {
-            static_assert(M % 2 == 0, "M must be even!");
+            y.at(j + 1).at(p) += y.at(j).at(d1) + y.at(j).at(d1) -
+                                 y.at(j + 1).at(d1) * a.at(j).at(1);
+            y.at(j + 1).at(p) +=
+              y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
         }
+    }
 
-        template <typename Iter>
-        void process(Iter begin, Iter end) 
-        {
-            constexpr int order {2};
-            constexpr int j1 {1};
-            constexpr int j2 {2};
-
-            int p {this->pos};
-
-            std::array<std::array<double, 3>, M + 1> y = this->mem;
-
-            std::array<std::array<double, 3>, M> a = this->aCoeff;
-
-            while (begin < end) {
-                y.at(0).at(p) = *begin * this->gain;
-
-                int d1 {p - j1};
-                if (d1 < 0)
-                    d1 += order + 1;
-
-                int d2 {p - j2};
-                if (d2 < 0)
-                    d2 += order + 1;
-
-                uint j {0};
-
-                for (j = 0; j < M; j++) {
-                    y.at(j + 1).at(p) = y.at(j).at(p);
-
-                    y.at(j + 1).at(p) += - y.at(j).at(d1) - y.at(j).at(d1) - y.at(j + 1).at(d1) * a.at(j).at(j1);
-                    y.at(j + 1).at(p) += y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(j2);
-                }
-
-                *begin = y.at(j).at(p);
-
-                p++;
-                if (p > order)
-                    p = 0;
-                begin++;
-            }
-            this->pos = p;
-            this->mem = y;
-        }
-
-        void set_coeff(double f0, double fs, double gainIn = 1.0) 
-        {
-            this->gain = gainIn;
-            
-            double e0 {2 * M_PI * f0 / fs};
-            for (unsigned int k = 0; k < M; k++) {
-                double dk {2 * std::sin((2 * k + 1) * M_PI / (4.0 * M))};
-
-                double t {dk * std::sin(e0) / 2};
-                double dnm {1 + t};
-                
-                double beta1 {(1 - t) / dnm / 2};
-                double gamma1 {(0.5 + beta1) * std::cos(e0)};
-                double alpha1 {(0.5 + beta1 + gamma1) / 4};
-
-                this->gain *= 2 * alpha1;
-                //bCoeff.at(k).at(0) = 1.0;
-                //bCoeff.at(k).at(1) = -2.0;
-                //bCoeff.at(k).at(2) = 1.0;
-
-                this->aCoeff.at(k).at(0) = 1;
-                this->aCoeff.at(k).at(1) = -2 * gamma1;
-                this->aCoeff.at(k).at(2) = 2 * beta1;
-            }
-        }
-    };
-
-    template<size_t M>
-    class casc_2o_IIR_bp : casc_2o_IIR<M>
+    void set_coeff(double f0, double fs, double gainIn = 1.0)
     {
-    public:
+        this->gain = gainIn;
 
-        casc_2o_IIR_bp()
-        {
-            static_assert(M % 2 == 0, "M must be even!");
+        double e0{ 2 * M_PI * f0 / fs };
+        for (unsigned int k = 0; k < M; k++) {
+            double dk{ 2 * std::sin((2 * k + 1) * M_PI / (4.0 * M)) };
+
+            double t{ dk * std::sin(e0) / 2 };
+            double dnm{ 1 + t };
+
+            double beta1{ (1 - t) / dnm / 2 };
+            double gamma1{ (0.5 + beta1) * std::cos(e0) };
+            double alpha1{ (0.5 + beta1 - gamma1) / 4 };
+
+            this->gain *= 2 * alpha1;
+            // bCoeff.at(k).at(0) = 1.0;
+            // bCoeff.at(k).at(1) = 2.0;
+            // bCoeff.at(k).at(2) = 1.0;
+
+            this->aCoeff.at(k).at(0) = 1;
+            this->aCoeff.at(k).at(1) = -2 * gamma1;
+            this->aCoeff.at(k).at(2) = 2 * beta1;
         }
+    }
+};
 
-        template <typename Iter>
-        void process(Iter begin, Iter end) 
-        {
-            constexpr int order {2};
-            constexpr int j1 {1};
-            constexpr int j2 {2};
+template<size_t M>
+class casc_2o_IIR_hp : casc_2o_IIR<M>
+{
+public:
+    casc_2o_IIR_hp() { static_assert(M % 2 == 0, "M must be even!"); }
 
-            int p {this->pos};
+    template<typename Iter>
+    void process(Iter begin, Iter end)
+    {
+        this->template process_base<casc_2o_IIR_hp<M>>(begin, end);
+    }
 
-            std::array<std::array<double, 3>, M + 1> y = this->mem;
+    static void process_spec(std::array<std::array<double, 3>, M + 1>& y,
+                             const std::array<std::array<double, 3>, M>& a,
+                             int p, int d1, int d2)
+    {
+        for (uint j = 0; j < M; j++) {
+            y.at(j + 1).at(p) = y.at(j).at(p);
 
-            std::array<std::array<double, 3>, M> a = this->aCoeff;
-
-            while (begin < end) {
-                y.at(0).at(p) = *begin * this->gain;
-
-                int d1 {p - j1};
-                if (d1 < 0)
-                    d1 += order + 1;
-
-                int d2 {p - j2};
-                if (d2 < 0)
-                    d2 += order + 1;
-
-                uint j {0};
-
-                for (j = 0; j < M; j++) {
-                    y.at(j + 1).at(p) = y.at(j).at(p);
-
-                    y.at(j + 1).at(p) += - y.at(j + 1).at(d1) * a.at(j).at(j1);
-                    y.at(j + 1).at(p) += - y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(j2);
-                }
-
-                *begin = y.at(j).at(p);
-
-                p++;
-                if (p > order)
-                    p = 0;
-                begin++;
-            }
-            this->pos = p;
-            this->mem = y;
+            y.at(j + 1).at(p) += -y.at(j).at(d1) - y.at(j).at(d1) -
+                                 y.at(j + 1).at(d1) * a.at(j).at(1);
+            y.at(j + 1).at(p) +=
+              y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
         }
+    }
 
-        void set_coeff(double f0, double fs, double Q, double gainIn = 1.0) 
-        {
-            double q2 {2 * Q};
-            this->gain = gainIn;
+    void set_coeff(double f0, double fs, double gainIn = 1.0)
+    {
+        this->gain = gainIn;
 
-            double e0 {2 * M_PI * f0 / fs};
-            double dnm {std::sin(e0)};
-            
-            double de {2 * std::tan(e0 / q2) / dnm};
-            
-            for (unsigned int k = 0; k < M / 2; k++) {
-                double D {2 * std::sin((2 * k + 1) * M_PI / (2.0 * M))};
-                
-                double A {(1 + de * de / 4.0) * 2 / D / de};
-                double dk {std::sqrt(de * D / (A + std::sqrt(A * A - 1)))};
-                
-                double B {D * de / dk / 2.0};
-                double W {B + std::sqrt(B * B - 1)};
-                
-                double t {std::tan(e0 / 2.0)};
-                
-                double e1 {2.0 * std::atan(t / W)};
-                double e2 {2.0 * std::atan(W * t)};
+        double e0{ 2 * M_PI * f0 / fs };
+        for (unsigned int k = 0; k < M; k++) {
+            double dk{ 2 * std::sin((2 * k + 1) * M_PI / (4.0 * M)) };
 
-                t = dk * std::sin(e1) / 2.0;
-                dnm = (1 + t);
-                double beta1 {(1 - t) / dnm / 2.0};
+            double t{ dk * std::sin(e0) / 2 };
+            double dnm{ 1 + t };
 
-                t = dk * std::sin(e2) / 2.0;
-                dnm = (1 + t);
-                double beta2 {(1 - t) / dnm / 2.0};
+            double beta1{ (1 - t) / dnm / 2 };
+            double gamma1{ (0.5 + beta1) * std::cos(e0) };
+            double alpha1{ (0.5 + beta1 + gamma1) / 4 };
 
-                double gamma1 {(0.5 + beta1) * std::cos(e1)};
-                double gamma2 {(0.5 + beta2) * std::cos(e2)};
+            this->gain *= 2 * alpha1;
+            // bCoeff.at(k).at(0) = 1.0;
+            // bCoeff.at(k).at(1) = -2.0;
+            // bCoeff.at(k).at(2) = 1.0;
 
-                t = std::sqrt(1 + (W - 1 / W) / dk * (W - 1 / W) / dk);
-                double alpha1 {(0.5 - beta1) * t / 2.0};
-                double alpha2 {(0.5 - beta2) * t / 2.0};
-
-                this->gain *= 4 * alpha1 * alpha2;
-                //bCoeff.at(2 * k).at(0) = 1.0;
-                //bCoeff.at(2 * k + 1).at(0) = 1.0;
-                //bCoeff.at(2 * k).at(1) = 0;
-                //bCoeff.at(2 * k + 1).at(1) = 0;
-                //bCoeff.at(2 * k).at(2) = -1.0;
-                //bCoeff.at(2 * k + 1).at(2) = -1.0;
-
-                this->aCoeff.at(2 * k).at(0) = 1;
-                this->aCoeff.at(2 * k + 1).at(0) = 1;
-                this->aCoeff.at(2 * k).at(1) = -2 * gamma1;
-                this->aCoeff.at(2 * k + 1).at(1) = -2 * gamma2;
-                this->aCoeff.at(2 * k).at(2) = 2 * beta1;
-                this->aCoeff.at(2 * k + 1).at(2) = 2 * beta2;
-            }
+            this->aCoeff.at(k).at(0) = 1;
+            this->aCoeff.at(k).at(1) = -2 * gamma1;
+            this->aCoeff.at(k).at(2) = 2 * beta1;
         }
-    };
+    }
+};
+
+template<size_t M>
+class casc_2o_IIR_bp : casc_2o_IIR<M>
+{
+public:
+    casc_2o_IIR_bp() { static_assert(M % 2 == 0, "M must be even!"); }
+
+    template<typename Iter>
+    void process(Iter begin, Iter end)
+    {
+        this->template process_base<casc_2o_IIR_bp<M>>(begin, end);
+    }
+
+    static void process_spec(std::array<std::array<double, 3>, M + 1>& y,
+                             const std::array<std::array<double, 3>, M>& a,
+                             int p, int d1, int d2)
+    {
+        for (uint j = 0; j < M; j++) {
+            y.at(j + 1).at(p) = y.at(j).at(p);
+
+            y.at(j + 1).at(p) += -y.at(j + 1).at(d1) * a.at(j).at(1);
+            y.at(j + 1).at(p) +=
+              -y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
+        }
+    }
+
+    void set_coeff(double f0, double fs, double Q, double gainIn = 1.0)
+    {
+        double q2{ 2 * Q };
+        this->gain = gainIn;
+
+        double e0{ 2 * M_PI * f0 / fs };
+        double dnm{ std::sin(e0) };
+
+        double de{ 2 * std::tan(e0 / q2) / dnm };
+
+        for (unsigned int k = 0; k < M / 2; k++) {
+            double D{ 2 * std::sin((2 * k + 1) * M_PI / (2.0 * M)) };
+
+            double A{ (1 + de * de / 4.0) * 2 / D / de };
+            double dk{ std::sqrt(de * D / (A + std::sqrt(A * A - 1))) };
+
+            double B{ D * de / dk / 2.0 };
+            double W{ B + std::sqrt(B * B - 1) };
+
+            double t{ std::tan(e0 / 2.0) };
+
+            double e1{ 2.0 * std::atan(t / W) };
+            double e2{ 2.0 * std::atan(W * t) };
+
+            t = dk * std::sin(e1) / 2.0;
+            dnm = (1 + t);
+            double beta1{ (1 - t) / dnm / 2.0 };
+
+            t = dk * std::sin(e2) / 2.0;
+            dnm = (1 + t);
+            double beta2{ (1 - t) / dnm / 2.0 };
+
+            double gamma1{ (0.5 + beta1) * std::cos(e1) };
+            double gamma2{ (0.5 + beta2) * std::cos(e2) };
+
+            t = std::sqrt(1 + (W - 1 / W) / dk * (W - 1 / W) / dk);
+            double alpha1{ (0.5 - beta1) * t / 2.0 };
+            double alpha2{ (0.5 - beta2) * t / 2.0 };
+
+            this->gain *= 4 * alpha1 * alpha2;
+            // bCoeff.at(2 * k).at(0) = 1.0;
+            // bCoeff.at(2 * k + 1).at(0) = 1.0;
+            // bCoeff.at(2 * k).at(1) = 0;
+            // bCoeff.at(2 * k + 1).at(1) = 0;
+            // bCoeff.at(2 * k).at(2) = -1.0;
+            // bCoeff.at(2 * k + 1).at(2) = -1.0;
+
+            this->aCoeff.at(2 * k).at(0) = 1;
+            this->aCoeff.at(2 * k + 1).at(0) = 1;
+            this->aCoeff.at(2 * k).at(1) = -2 * gamma1;
+            this->aCoeff.at(2 * k + 1).at(1) = -2 * gamma2;
+            this->aCoeff.at(2 * k).at(2) = 2 * beta1;
+            this->aCoeff.at(2 * k + 1).at(2) = 2 * beta2;
+        }
+    }
+};
 }

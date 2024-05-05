@@ -142,7 +142,8 @@ TEST_CASE("LP compile time filter test")
         std::string path = "../../../test_data/impulse_response";
         for (const auto& entry : std::filesystem::directory_iterator(path)) {
 
-            if (entry.path().filename().string().starts_with("LP") == false)
+            //check that filename starts with LP
+            if (entry.path().filename().string().rfind("LP", 0) != 0)
                 continue;
 
             auto [readImpulse, fType, fs, f0, Q] =
@@ -226,7 +227,8 @@ TEST_CASE("HP compile time filter test")
         std::string path = "../../../test_data/impulse_response";
         for (const auto& entry : std::filesystem::directory_iterator(path)) {
 
-            if (entry.path().filename().string().starts_with("HP") == false)
+            //check that filename starts with HP
+            if (entry.path().filename().string().rfind("HP", 0) != 0)
                 continue;
 
             auto [readImpulse, fType, fs, f0, Q] =
@@ -310,7 +312,8 @@ TEST_CASE("BP compile time filter test")
         std::string path = "../../../test_data/impulse_response";
         for (const auto& entry : std::filesystem::directory_iterator(path)) {
 
-            if (entry.path().filename().string().starts_with("BP") == false)
+            //check that filename starts with BP
+            if (entry.path().filename().string().rfind("BP", 0) != 0)
                 continue;
 
             auto [readImpulse, fType, fs, f0, Q] =

@@ -1,0 +1,10 @@
+﻿---
+BasedOnStyle: Mozilla
+AccessModifierOffset: '-4'
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+BinPackArguments: true
+BinPackParameters: true
+IndentWidth: '4'
+
+...

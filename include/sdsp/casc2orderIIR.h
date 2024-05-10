@@ -3,10 +3,10 @@
 #include <array>
 #include <cmath>
 
-namespace sdsp {
-template<size_t M>
-class casc2orderIIR
+namespace sdsp
 {
+template <size_t M>
+class casc2orderIIR {
 private:
     int pos{ 0 };
 
@@ -18,9 +18,12 @@ private:
     FilterType fType{ FilterType::None };
 
 public:
-    casc2orderIIR() { static_assert(M % 2 == 0, "M must be even!"); }
+    casc2orderIIR()
+    {
+        static_assert(M % 2 == 0, "M must be even!");
+    }
 
-    template<typename Iter>
+    template <typename Iter>
     void Process(Iter begin, Iter end)
     {
         constexpr int order{ 2 };
@@ -51,10 +54,8 @@ public:
             for (j = 0; j < M; j++) {
                 y.at(j + 1).at(p) = y.at(j).at(p) * b.at(j).at(0);
 
-                y.at(j + 1).at(p) += y.at(j).at(d1) * b.at(j).at(j1) -
-                                     y.at(j + 1).at(d1) * a.at(j).at(j1);
-                y.at(j + 1).at(p) += y.at(j).at(d2) * b.at(j).at(j2) -
-                                     y.at(j + 1).at(d2) * a.at(j).at(j2);
+                y.at(j + 1).at(p) += y.at(j).at(d1) * b.at(j).at(j1) - y.at(j + 1).at(d1) * a.at(j).at(j1);
+                y.at(j + 1).at(p) += y.at(j).at(d2) * b.at(j).at(j2) - y.at(j + 1).at(d2) * a.at(j).at(j2);
             }
 
             *begin = y.at(j).at(p);
@@ -191,9 +192,8 @@ public:
     }
 };
 
-template<size_t M>
-class casc_2o_IIR
-{
+template <size_t M>
+class casc_2o_IIR {
 protected:
     int pos{ 0 };
 
@@ -203,7 +203,7 @@ protected:
 
     std::array<std::array<double, 3>, M> aCoeff{ 0 };
 
-    template<typename T, typename Iter>
+    template <typename T, typename Iter>
     void process_base(Iter begin, Iter end)
     {
         constexpr int order{ 2 };
@@ -241,29 +241,28 @@ protected:
     }
 };
 
-template<size_t M>
-class casc_2o_IIR_lp : casc_2o_IIR<M>
-{
+template <size_t M>
+class casc_2o_IIR_lp : casc_2o_IIR<M> {
 public:
-    casc_2o_IIR_lp() { static_assert(M % 2 == 0, "M must be even!"); }
+    casc_2o_IIR_lp()
+    {
+        static_assert(M % 2 == 0, "M must be even!");
+    }
 
-    template<typename Iter>
+    template <typename Iter>
     void process(Iter begin, Iter end)
     {
         this->template process_base<casc_2o_IIR_lp<M>>(begin, end);
     }
 
-    static void process_spec(std::array<std::array<double, 3>, M + 1>& y,
-                             const std::array<std::array<double, 3>, M>& a,
+    static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,
                              int p, int d1, int d2)
     {
         for (uint j = 0; j < M; j++) {
             y.at(j + 1).at(p) = y.at(j).at(p);
 
-            y.at(j + 1).at(p) += y.at(j).at(d1) + y.at(j).at(d1) -
-                                 y.at(j + 1).at(d1) * a.at(j).at(1);
-            y.at(j + 1).at(p) +=
-              y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
+            y.at(j + 1).at(p) += y.at(j).at(d1) + y.at(j).at(d1) - y.at(j + 1).at(d1) * a.at(j).at(1);
+            y.at(j + 1).at(p) += y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
         }
     }
 
@@ -294,29 +293,28 @@ public:
     }
 };
 
-template<size_t M>
-class casc_2o_IIR_hp : casc_2o_IIR<M>
-{
+template <size_t M>
+class casc_2o_IIR_hp : casc_2o_IIR<M> {
 public:
-    casc_2o_IIR_hp() { static_assert(M % 2 == 0, "M must be even!"); }
+    casc_2o_IIR_hp()
+    {
+        static_assert(M % 2 == 0, "M must be even!");
+    }
 
-    template<typename Iter>
+    template <typename Iter>
     void process(Iter begin, Iter end)
     {
         this->template process_base<casc_2o_IIR_hp<M>>(begin, end);
     }
 
-    static void process_spec(std::array<std::array<double, 3>, M + 1>& y,
-                             const std::array<std::array<double, 3>, M>& a,
+    static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,
                              int p, int d1, int d2)
     {
         for (uint j = 0; j < M; j++) {
             y.at(j + 1).at(p) = y.at(j).at(p);
 
-            y.at(j + 1).at(p) += -y.at(j).at(d1) - y.at(j).at(d1) -
-                                 y.at(j + 1).at(d1) * a.at(j).at(1);
-            y.at(j + 1).at(p) +=
-              y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
+            y.at(j + 1).at(p) += -y.at(j).at(d1) - y.at(j).at(d1) - y.at(j + 1).at(d1) * a.at(j).at(1);
+            y.at(j + 1).at(p) += y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
         }
     }
 
@@ -347,28 +345,28 @@ public:
     }
 };
 
-template<size_t M>
-class casc_2o_IIR_bp : casc_2o_IIR<M>
-{
+template <size_t M>
+class casc_2o_IIR_bp : casc_2o_IIR<M> {
 public:
-    casc_2o_IIR_bp() { static_assert(M % 2 == 0, "M must be even!"); }
+    casc_2o_IIR_bp()
+    {
+        static_assert(M % 2 == 0, "M must be even!");
+    }
 
-    template<typename Iter>
+    template <typename Iter>
     void process(Iter begin, Iter end)
     {
         this->template process_base<casc_2o_IIR_bp<M>>(begin, end);
     }
 
-    static void process_spec(std::array<std::array<double, 3>, M + 1>& y,
-                             const std::array<std::array<double, 3>, M>& a,
+    static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,
                              int p, int d1, int d2)
     {
         for (uint j = 0; j < M; j++) {
             y.at(j + 1).at(p) = y.at(j).at(p);
 
             y.at(j + 1).at(p) += -y.at(j + 1).at(d1) * a.at(j).at(1);
-            y.at(j + 1).at(p) +=
-              -y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
+            y.at(j + 1).at(p) += -y.at(j).at(d2) - y.at(j + 1).at(d2) * a.at(j).at(2);
         }
     }
 

@@ -26,6 +26,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: clang-format lint
+      uses: DoozyX/clang-format-lint-action@v0.9
+      with:
+        source: '.'
+        extensions: 'h,cpp,c'
+
     - name: Install Conan
       id: conan
       uses: turtlebrowser/get-conan@main

@@ -4,8 +4,7 @@
 #include <filesystem>
 #include <fstream>
 
-std::tuple<std::vector<double>, sdsp::FilterType, double, double, double>
-csvreadImpulse2(const std::string& filename)
+std::tuple<std::vector<double>, sdsp::FilterType, double, double, double> csvreadImpulse2(const std::string &filename)
 {
     std::ifstream myfile;
     myfile.open(filename);
@@ -16,8 +15,7 @@ csvreadImpulse2(const std::string& filename)
     double fs_out{ 0.0 };
     double f0_out{ 0.0 };
     double Q_out{ 0.0 };
-    myfile >> fType >> comma >> fs_out >> comma >> f0_out >> comma >> Q_out >>
-      comma >> n >> comma;
+    myfile >> fType >> comma >> fs_out >> comma >> f0_out >> comma >> Q_out >> comma >> n >> comma;
     fType_out = static_cast<sdsp::FilterType>(fType);
 
     std::vector<double> impulse(n);
@@ -34,10 +32,8 @@ TEST_CASE("Filter test")
     SECTION("Test impulse response")
     {
         std::string path = "../../../test_data/impulse_response";
-        for (const auto& entry : std::filesystem::directory_iterator(path)) {
-
-            auto [readImpulse, fType, fs, f0, Q] =
-              csvreadImpulse2(entry.path().string());
+        for (const auto &entry : std::filesystem::directory_iterator(path)) {
+            auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
             sdsp::casc2orderIIR<4> df;
 
             if (fType == sdsp::FilterType::LowPass) {
@@ -68,10 +64,8 @@ TEST_CASE("Filter test")
 
             constexpr unsigned int blockSize{ 32 };
             unsigned int index{ 0 };
-            for (index = 0; index <= data2.size() - blockSize;
-                 index += blockSize) {
-                df2.Process(std::next(data2.begin(), index),
-                            std::next(data2.begin(), index + blockSize));
+            for (index = 0; index <= data2.size() - blockSize; index += blockSize) {
+                df2.Process(std::next(data2.begin(), index), std::next(data2.begin(), index + blockSize));
             }
 
             if (index < data2.size()) {
@@ -96,12 +90,9 @@ TEST_CASE("Filter test")
             lpFilter.SetLPCoeff(f0, fs);
             lpFilter.PreloadFilter(steadyValue);
             lpFilter.Process(steadyLP.begin(), steadyLP.end());
-            auto calcError = [steadyValue](double& n) {
-                n = std::abs(n - steadyValue);
-            };
+            auto calcError = [steadyValue](double &n) { n = std::abs(n - steadyValue); };
             std::for_each(steadyLP.begin(), steadyLP.end(), calcError);
-            double maxErrorLP =
-              *std::max_element(steadyLP.begin(), steadyLP.end());
+            double maxErrorLP = *std::max_element(steadyLP.begin(), steadyLP.end());
             REQUIRE(maxErrorLP < 1e-12);
         }
 
@@ -112,10 +103,9 @@ TEST_CASE("Filter test")
             hpFilter.SetHPCoeff(f0, fs);
             hpFilter.PreloadFilter(steadyValue);
             hpFilter.Process(steadyHP.begin(), steadyHP.end());
-            auto calcError = [](double& n) { n = std::abs(n); };
+            auto calcError = [](double &n) { n = std::abs(n); };
             std::for_each(steadyHP.begin(), steadyHP.end(), calcError);
-            double maxErrorHP =
-              *std::max_element(steadyHP.begin(), steadyHP.end());
+            double maxErrorHP = *std::max_element(steadyHP.begin(), steadyHP.end());
             REQUIRE(maxErrorHP < 1e-12);
         }
 
@@ -126,10 +116,9 @@ TEST_CASE("Filter test")
             bpFilter.SetBPCoeff(f0, fs, Q);
             bpFilter.PreloadFilter(steadyValue);
             bpFilter.Process(steadyBP.begin(), steadyBP.end());
-            auto calcError = [](double& n) { n = std::abs(n); };
+            auto calcError = [](double &n) { n = std::abs(n); };
             std::for_each(steadyBP.begin(), steadyBP.end(), calcError);
-            double maxErrorBP =
-              *std::max_element(steadyBP.begin(), steadyBP.end());
+            double maxErrorBP = *std::max_element(steadyBP.begin(), steadyBP.end());
             REQUIRE(maxErrorBP < 1e-12);
         }
     }
@@ -140,14 +129,12 @@ TEST_CASE("LP compile time filter test")
     SECTION("Test impulse response of LP specialized")
     {
         std::string path = "../../../test_data/impulse_response";
-        for (const auto& entry : std::filesystem::directory_iterator(path)) {
-
+        for (const auto &entry : std::filesystem::directory_iterator(path)) {
             //check that filename starts with LP
             if (entry.path().filename().string().rfind("LP", 0) != 0)
                 continue;
 
-            auto [readImpulse, fType, fs, f0, Q] =
-              csvreadImpulse2(entry.path().string());
+            auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
             sdsp::casc_2o_IIR_lp<4> df;
 
             if (fType == sdsp::FilterType::LowPass) {
@@ -174,10 +161,8 @@ TEST_CASE("LP compile time filter test")
 
             constexpr unsigned int blockSize{ 32 };
             unsigned int index{ 0 };
-            for (index = 0; index <= data2.size() - blockSize;
-                 index += blockSize) {
-                df2.process(std::next(data2.begin(), index),
-                            std::next(data2.begin(), index + blockSize));
+            for (index = 0; index <= data2.size() - blockSize; index += blockSize) {
+                df2.process(std::next(data2.begin(), index), std::next(data2.begin(), index + blockSize));
             }
 
             if (index < data2.size()) {
@@ -207,7 +192,7 @@ TEST_CASE("LP compile time filter test")
         df.process(impulse1.begin(), impulse1.end());
         df2.process(impulse2.begin(), impulse2.end());
 
-        auto times_two = [](double& n) { n = 2.0 * n; };
+        auto times_two = [](double &n) { n = 2.0 * n; };
         std::for_each(impulse1.begin(), impulse1.end(), times_two);
 
         std::array<double, 1024> error{ 0 };
@@ -225,14 +210,12 @@ TEST_CASE("HP compile time filter test")
     SECTION("Test impulse response of HP specialized")
     {
         std::string path = "../../../test_data/impulse_response";
-        for (const auto& entry : std::filesystem::directory_iterator(path)) {
-
+        for (const auto &entry : std::filesystem::directory_iterator(path)) {
             //check that filename starts with HP
             if (entry.path().filename().string().rfind("HP", 0) != 0)
                 continue;
 
-            auto [readImpulse, fType, fs, f0, Q] =
-              csvreadImpulse2(entry.path().string());
+            auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
             sdsp::casc_2o_IIR_hp<4> df;
 
             if (fType == sdsp::FilterType::HighPass) {
@@ -259,10 +242,8 @@ TEST_CASE("HP compile time filter test")
 
             constexpr unsigned int blockSize{ 32 };
             unsigned int index{ 0 };
-            for (index = 0; index <= data2.size() - blockSize;
-                 index += blockSize) {
-                df2.process(std::next(data2.begin(), index),
-                            std::next(data2.begin(), index + blockSize));
+            for (index = 0; index <= data2.size() - blockSize; index += blockSize) {
+                df2.process(std::next(data2.begin(), index), std::next(data2.begin(), index + blockSize));
             }
 
             if (index < data2.size()) {
@@ -292,7 +273,7 @@ TEST_CASE("HP compile time filter test")
         df.process(impulse1.begin(), impulse1.end());
         df2.process(impulse2.begin(), impulse2.end());
 
-        auto times_two = [](double& n) { n = 2.0 * n; };
+        auto times_two = [](double &n) { n = 2.0 * n; };
         std::for_each(impulse1.begin(), impulse1.end(), times_two);
 
         std::array<double, 1024> error{ 0 };
@@ -310,14 +291,12 @@ TEST_CASE("BP compile time filter test")
     SECTION("Test impulse response of BP specialized")
     {
         std::string path = "../../../test_data/impulse_response";
-        for (const auto& entry : std::filesystem::directory_iterator(path)) {
-
+        for (const auto &entry : std::filesystem::directory_iterator(path)) {
             //check that filename starts with BP
             if (entry.path().filename().string().rfind("BP", 0) != 0)
                 continue;
 
-            auto [readImpulse, fType, fs, f0, Q] =
-              csvreadImpulse2(entry.path().string());
+            auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
             sdsp::casc_2o_IIR_bp<4> df;
 
             if (fType == sdsp::FilterType::BandPass) {
@@ -344,10 +323,8 @@ TEST_CASE("BP compile time filter test")
 
             constexpr unsigned int blockSize{ 32 };
             unsigned int index{ 0 };
-            for (index = 0; index <= data2.size() - blockSize;
-                 index += blockSize) {
-                df2.process(std::next(data2.begin(), index),
-                            std::next(data2.begin(), index + blockSize));
+            for (index = 0; index <= data2.size() - blockSize; index += blockSize) {
+                df2.process(std::next(data2.begin(), index), std::next(data2.begin(), index + blockSize));
             }
 
             if (index < data2.size()) {
@@ -378,7 +355,7 @@ TEST_CASE("BP compile time filter test")
         df.process(impulse1.begin(), impulse1.end());
         df2.process(impulse2.begin(), impulse2.end());
 
-        auto times_two = [](double& n) { n = 2.0 * n; };
+        auto times_two = [](double &n) { n = 2.0 * n; };
         std::for_each(impulse1.begin(), impulse1.end(), times_two);
 
         std::array<double, 1024> error{ 0 };

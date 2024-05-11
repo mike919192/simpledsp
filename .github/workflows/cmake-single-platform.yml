@@ -36,8 +36,8 @@ jobs:
         find ./ -type f \( -iname \*.h -o -iname \*.cpp \) | xargs clang-format --dry-run -Werror
 
     - name: Install Conan
-      id: conan
-      uses: turtlebrowser/get-conan@main
+      run: |
+        sudo pip install conan
 
     - name: Create profile
       run: conan profile detect --force

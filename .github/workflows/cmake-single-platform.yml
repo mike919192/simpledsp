@@ -26,12 +26,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: clang-format lint
-      uses: DoozyX/clang-format-lint-action@v0.9
-      with:
-        source: '.'
-        extensions: 'h,cpp,c'
-        clangFormatVersion: 15
+    - name: Install clang format
+      run: |
+        sudo apt-get update
+        sudo apt-get install clang-format
+
+    - name: Check format
+      run: |
+        find ./ -type f \( -iname \*.h -o -iname \*.cpp \) | xargs clang-format --dry-run -Werror
 
     - name: Install Conan
       id: conan

@@ -37,8 +37,6 @@ jobs:
 
     - name: Install Conan
       run: |
-        sudo apt-get update
-        sudo apt install python3-pip
         sudo pip install conan
 
     - name: Create profile

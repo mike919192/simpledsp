@@ -387,14 +387,16 @@ TEST_CASE("Filter benchmarks")
 
         BENCHMARK("Runtime configurable LP filter benchmark")
         {
-            df.Process(data.begin(), data.end());
-            return data;
+            std::array<double, 4096> data2 = data;
+            df.Process(data2.begin(), data2.end());
+            return data2;
         };
 
         BENCHMARK("Specialized LP filter benchmark")
         {
-            df2.process(data.begin(), data.end());
-            return data;
+            std::array<double, 4096> data2 = data;
+            df2.process(data2.begin(), data2.end());
+            return data2;
         };
         SUCCEED();
     }
@@ -416,14 +418,16 @@ TEST_CASE("Filter benchmarks")
 
         BENCHMARK("Runtime configurable HP filter benchmark")
         {
-            df.Process(data.begin(), data.end());
-            return data;
+            std::array<double, 4096> data2 = data;
+            df.Process(data2.begin(), data2.end());
+            return data2;
         };
 
         BENCHMARK("Specialized HP filter benchmark")
         {
-            df2.process(data.begin(), data.end());
-            return data;
+            std::array<double, 4096> data2 = data;
+            df2.process(data2.begin(), data2.end());
+            return data2;
         };
         SUCCEED();
     }
@@ -445,14 +449,16 @@ TEST_CASE("Filter benchmarks")
 
         BENCHMARK("Runtime configurable BP filter benchmark")
         {
-            df.Process(data.begin(), data.end());
-            return data;
+            std::array<double, 4096> data2 = data;
+            df.Process(data2.begin(), data2.end());
+            return data2;
         };
 
         BENCHMARK("Specialized BP filter benchmark")
         {
-            df2.process(data.begin(), data.end());
-            return data;
+            std::array<double, 4096> data2 = data;
+            df2.process(data2.begin(), data2.end());
+            return data2;
         };
         SUCCEED();
     }

@@ -240,14 +240,16 @@ TEST_CASE("FFT benchmark", "[single-file]")
 
     BENCHMARK("Radix2 FFT")
     {
-        sdsp::fft_radix2(complexValues);
-        return complexValues;
+        sdsp::complex_array<1024> complexValues2 = complexValues;
+        sdsp::fft_radix2(complexValues2);
+        return complexValues2;
     };
 
     BENCHMARK("Radix4 FFT")
     {
-        sdsp::fft_radix4(complexValues);
-        return complexValues;
+        sdsp::complex_array<1024> complexValues2 = complexValues;
+        sdsp::fft_radix4(complexValues2);
+        return complexValues2;
     };
 
     SUCCEED("Benchmark placeholder assertion");

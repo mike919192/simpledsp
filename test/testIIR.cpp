@@ -85,7 +85,7 @@ TEST_CASE("Filter test")
 
         {
             std::array<double, 1024> steadyLP;
-            std::fill(steadyLP.begin(), steadyLP.end(), steadyValue);
+            steadyLP.fill(steadyValue);
             sdsp::casc2orderIIR<4> lpFilter;
             lpFilter.SetLPCoeff(f0, fs);
             lpFilter.PreloadFilter(steadyValue);
@@ -98,7 +98,7 @@ TEST_CASE("Filter test")
 
         {
             std::array<double, 1024> steadyHP;
-            std::fill(steadyHP.begin(), steadyHP.end(), steadyValue);
+            steadyHP.fill(steadyValue);
             sdsp::casc2orderIIR<4> hpFilter;
             hpFilter.SetHPCoeff(f0, fs);
             hpFilter.PreloadFilter(steadyValue);
@@ -111,7 +111,7 @@ TEST_CASE("Filter test")
 
         {
             std::array<double, 1024> steadyBP;
-            std::fill(steadyBP.begin(), steadyBP.end(), steadyValue);
+            steadyBP.fill(steadyValue);
             sdsp::casc2orderIIR<4> bpFilter;
             bpFilter.SetBPCoeff(f0, fs, Q);
             bpFilter.PreloadFilter(steadyValue);

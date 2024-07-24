@@ -76,6 +76,100 @@ TEST_CASE("Filter test")
         }
     }
 
+    SECTION("Test the LP filter gain")
+    {
+        constexpr double fs{ 100e3 };
+        constexpr double f0{ 10e3 };
+
+        std::array<double, 1024> impulse1{ 0 };
+        impulse1.at(0) = 1.0;
+        std::array<double, 1024> impulse2{ 0 };
+        impulse2.at(0) = 1.0;
+
+        sdsp::casc2orderIIR<4> df;
+        df.SetLPCoeff(f0, fs);
+
+        sdsp::casc2orderIIR<4> df2;
+        df2.SetLPCoeff(f0, fs, 2.0);
+
+        df.Process(impulse1.begin(), impulse1.end());
+        df2.Process(impulse2.begin(), impulse2.end());
+
+        auto times_two = [](double &n) { n = 2.0 * n; };
+        std::for_each(impulse1.begin(), impulse1.end(), times_two);
+
+        std::array<double, 1024> error{ 0 };
+
+        for (size_t i = 0; i < error.size(); i++) {
+            error.at(i) = std::abs(impulse1.at(i) - impulse2.at(i));
+        }
+        double maxError = *std::max_element(error.begin(), error.end());
+        REQUIRE(maxError < 1e-12);
+    }
+
+    SECTION("Test the HP filter gain")
+    {
+        constexpr double fs{ 100e3 };
+        constexpr double f0{ 10e3 };
+
+        std::array<double, 1024> impulse1{ 0 };
+        impulse1.at(0) = 1.0;
+        std::array<double, 1024> impulse2{ 0 };
+        impulse2.at(0) = 1.0;
+
+        sdsp::casc2orderIIR<4> df;
+        df.SetHPCoeff(f0, fs);
+
+        sdsp::casc2orderIIR<4> df2;
+        df2.SetHPCoeff(f0, fs, 2.0);
+
+        df.Process(impulse1.begin(), impulse1.end());
+        df2.Process(impulse2.begin(), impulse2.end());
+
+        auto times_two = [](double &n) { n = 2.0 * n; };
+        std::for_each(impulse1.begin(), impulse1.end(), times_two);
+
+        std::array<double, 1024> error{ 0 };
+
+        for (size_t i = 0; i < error.size(); i++) {
+            error.at(i) = std::abs(impulse1.at(i) - impulse2.at(i));
+        }
+        double maxError = *std::max_element(error.begin(), error.end());
+        REQUIRE(maxError < 1e-12);
+    }
+
+    SECTION("Test the BP filter gain")
+    {
+        constexpr double fs{ 100e3 };
+        constexpr double f0{ 10e3 };
+        constexpr double Q{ 1.1 };
+
+        std::array<double, 1024> impulse1{ 0 };
+        impulse1.at(0) = 1.0;
+        std::array<double, 1024> impulse2{ 0 };
+        impulse2.at(0) = 1.0;
+
+        sdsp::casc2orderIIR<4> df;
+        df.SetBPCoeff(f0, fs, Q);
+
+        sdsp::casc2orderIIR<4> df2;
+        df2.SetBPCoeff(f0, fs, Q, 2.0);
+
+        df.Process(impulse1.begin(), impulse1.end());
+        df2.Process(impulse2.begin(), impulse2.end());
+
+        auto times_two = [](double &n) { n = 2.0 * n; };
+        std::for_each(impulse1.begin(), impulse1.end(), times_two);
+
+        std::array<double, 1024> error{ 0 };
+
+        for (size_t i = 0; i < error.size(); i++) {
+            error.at(i) = std::abs(impulse1.at(i) - impulse2.at(i));
+        }
+        double maxError = *std::max_element(error.begin(), error.end());
+        REQUIRE(maxError < 1e-12);
+    }
+
     SECTION("Test filter preload")
     {
         constexpr double fs{ 100e3 };

@@ -10,6 +10,8 @@ class casc2orderIIR {
 private:
     int pos{ 0 };
 
+    double gain{ 1.0 };
+
     std::array<std::array<double, 3>, M + 1> mem{ 0 };
 
     std::array<std::array<double, 3>, M> bCoeff{ 0 };
@@ -39,7 +41,7 @@ public:
         std::array<std::array<double, 3>, M> a = aCoeff;
 
         while (begin < end) {
-            y.at(0).at(p) = *begin;
+            y.at(0).at(p) = *begin * gain;
 
             int d1{ p - j1 };
             if (d1 < 0)
@@ -69,8 +71,9 @@ public:
         mem = y;
     }
 
-    void SetBPCoeff(double f0, double fs, double Q)
+    void SetBPCoeff(double f0, double fs, double Q, double gainIn = 1.0)
     {
+        gain = gainIn;
         double q2{ 2 * Q };
         fType = FilterType::BandPass;
 
@@ -124,8 +127,9 @@ public:
         }
     }
 
-    void SetHPCoeff(double f0, double fs)
+    void SetHPCoeff(double f0, double fs, double gainIn = 1.0)
     {
+        gain = gainIn;
         fType = FilterType::HighPass;
 
         double e0{ 2 * M_PI * f0 / fs };
@@ -149,8 +153,9 @@ public:
         }
     }
 
-    void SetLPCoeff(double f0, double fs)
+    void SetLPCoeff(double f0, double fs, double gainIn = 1.0)
     {
+        gain = gainIn;
         fType = FilterType::LowPass;
 
         double e0{ 2 * M_PI * f0 / fs };

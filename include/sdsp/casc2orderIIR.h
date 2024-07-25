@@ -25,7 +25,7 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(casc2orderIIR<M> otherFilter)
+    void copy_coeff_from(const casc2orderIIR<M> &otherFilter)
     {
         gain = otherFilter.gain;
         bCoeff = otherFilter.bCoeff;
@@ -271,7 +271,7 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(casc_2o_IIR_lp<M> otherFilter)
+    void copy_coeff_from(const casc_2o_IIR_lp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;
@@ -329,7 +329,7 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(casc_2o_IIR_hp<M> otherFilter)
+    void copy_coeff_from(const casc_2o_IIR_hp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;
@@ -387,7 +387,7 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(casc_2o_IIR_bp<M> otherFilter)
+    void copy_coeff_from(const casc_2o_IIR_bp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;

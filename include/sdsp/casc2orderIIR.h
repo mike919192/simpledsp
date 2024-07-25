@@ -25,6 +25,14 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
+    void copy_coeff_from(casc2orderIIR<M> otherFilter)
+    {
+        gain = otherFilter.gain;
+        bCoeff = otherFilter.bCoeff;
+        aCoeff = otherFilter.aCoeff;
+        fType = otherFilter.fType;
+    }
+
     template <typename Iter>
     void Process(Iter begin, Iter end)
     {
@@ -54,7 +62,7 @@ public:
             uint j;
 
             for (j = 0; j < M; j++) {
-                y.at(j + 1).at(p) = y.at(j).at(p) * b.at(j).at(0);
+                y.at(j + 1).at(p) = y.at(j).at(p);
 
                 y.at(j + 1).at(p) += y.at(j).at(d1) * b.at(j).at(j1) - y.at(j + 1).at(d1) * a.at(j).at(j1);
                 y.at(j + 1).at(p) += y.at(j).at(d2) * b.at(j).at(j2) - y.at(j + 1).at(d2) * a.at(j).at(j2);
@@ -111,12 +119,14 @@ public:
             double alpha1{ (0.5 - beta1) * t / 2.0 };
             double alpha2{ (0.5 - beta2) * t / 2.0 };
 
-            bCoeff.at(2 * k).at(0) = 2 * alpha1;
-            bCoeff.at(2 * k + 1).at(0) = 2 * alpha2;
+            gain *= 4 * alpha1 * alpha2;
+
+            bCoeff.at(2 * k).at(0) = 1.0;
+            bCoeff.at(2 * k + 1).at(0) = 1.0;
             bCoeff.at(2 * k).at(1) = 0;
             bCoeff.at(2 * k + 1).at(1) = 0;
-            bCoeff.at(2 * k).at(2) = -bCoeff.at(2 * k).at(0);
-            bCoeff.at(2 * k + 1).at(2) = -bCoeff.at(2 * k + 1).at(0);
+            bCoeff.at(2 * k).at(2) = -1.0;
+            bCoeff.at(2 * k + 1).at(2) = -1.0;
 
             aCoeff.at(2 * k).at(0) = 1;
             aCoeff.at(2 * k + 1).at(0) = 1;
@@ -141,11 +151,13 @@ public:
 
             double beta1{ (1 - t) / dnm / 2 };
             double gamma1{ (0.5 + beta1) * std::cos(e0) };
-            double alpha1{ (0.5 + beta1 + gamma1) / 4 }; //-
+            double alpha1{ (0.5 + beta1 + gamma1) / 4 };
 
-            bCoeff.at(k).at(0) = 2 * alpha1;
-            bCoeff.at(k).at(1) = -2 * bCoeff.at(k).at(0); //-
-            bCoeff.at(k).at(2) = bCoeff.at(k).at(0);
+            gain *= 2 * alpha1;
+
+            bCoeff.at(k).at(0) = 1.0;
+            bCoeff.at(k).at(1) = -2.0;
+            bCoeff.at(k).at(2) = 1.0;
 
             aCoeff.at(k).at(0) = 1;
             aCoeff.at(k).at(1) = -2 * gamma1;
@@ -169,9 +181,11 @@ public:
             double gamma1{ (0.5 + beta1) * std::cos(e0) };
             double alpha1{ (0.5 + beta1 - gamma1) / 4 };
 
-            bCoeff.at(k).at(0) = 2 * alpha1;
-            bCoeff.at(k).at(1) = 2 * bCoeff.at(k).at(0);
-            bCoeff.at(k).at(2) = bCoeff.at(k).at(0);
+            gain *= 2 * alpha1;
+
+            bCoeff.at(k).at(0) = 1.0;
+            bCoeff.at(k).at(1) = 2.0;
+            bCoeff.at(k).at(2) = 1.0;
 
             aCoeff.at(k).at(0) = 1;
             aCoeff.at(k).at(1) = -2 * gamma1;
@@ -182,14 +196,17 @@ public:
     // preload the filter memory for steady state input equal to value parameter
     void PreloadFilter(double value)
     {
+        double preload_value = value * gain;
         std::array<std::array<double, 3>, M + 1> memVals{ 0 };
         for (int i = 0; i < 3; i++) {
-            memVals.at(0).at(i) = value;
+            memVals.at(0).at(i) = preload_value;
         }
         if (fType == FilterType::LowPass) {
             for (uint j = 1; j < M + 1; j++) {
+                preload_value /= 1 + aCoeff.at(j - 1).at(1) + aCoeff.at(j - 1).at(2);
+                preload_value *= bCoeff.at(j - 1).at(0) + bCoeff.at(j - 1).at(1) + bCoeff.at(j - 1).at(2);
                 for (uint i = 0; i < 3; i++) {
-                    memVals.at(j).at(i) = value;
+                    memVals.at(j).at(i) = preload_value;
                 }
             }
         }
@@ -254,6 +271,12 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
+    void copy_coeff_from(casc_2o_IIR_lp<M> otherFilter)
+    {
+        this->gain = otherFilter.gain;
+        this->aCoeff = otherFilter.aCoeff;
+    }
+
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
@@ -306,6 +329,12 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
+    void copy_coeff_from(casc_2o_IIR_hp<M> otherFilter)
+    {
+        this->gain = otherFilter.gain;
+        this->aCoeff = otherFilter.aCoeff;
+    }
+
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
@@ -356,6 +385,12 @@ public:
     casc_2o_IIR_bp()
     {
         static_assert(M % 2 == 0, "M must be even!");
+    }
+
+    void copy_coeff_from(casc_2o_IIR_bp<M> otherFilter)
+    {
+        this->gain = otherFilter.gain;
+        this->aCoeff = otherFilter.aCoeff;
     }
 
     template <typename Iter>

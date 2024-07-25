@@ -25,6 +25,14 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
+    void copy_coeff_from(casc2orderIIR<M> otherFilter)
+    {
+        gain = otherFilter.gain;
+        bCoeff = otherFilter.bCoeff;
+        aCoeff = otherFilter.aCoeff;
+        fType = otherFilter.fType;
+    }
+
     template <typename Iter>
     void Process(Iter begin, Iter end)
     {
@@ -254,6 +262,12 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
+    void copy_coeff_from(casc_2o_IIR_lp<M> otherFilter)
+    {
+        this->gain = otherFilter.gain;
+        this->aCoeff = otherFilter.aCoeff;
+    }
+
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
@@ -306,6 +320,12 @@ public:
         static_assert(M % 2 == 0, "M must be even!");
     }
 
+    void copy_coeff_from(casc_2o_IIR_hp<M> otherFilter)
+    {
+        this->gain = otherFilter.gain;
+        this->aCoeff = otherFilter.aCoeff;
+    }
+
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
@@ -356,6 +376,12 @@ public:
     casc_2o_IIR_bp()
     {
         static_assert(M % 2 == 0, "M must be even!");
+    }
+
+    void copy_coeff_from(casc_2o_IIR_bp<M> otherFilter)
+    {
+        this->gain = otherFilter.gain;
+        this->aCoeff = otherFilter.aCoeff;
     }
 
     template <typename Iter>

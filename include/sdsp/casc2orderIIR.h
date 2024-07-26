@@ -6,7 +6,7 @@
 namespace sdsp
 {
 template <size_t M>
-class casc2orderIIR {
+class casc_2o_IIR {
 private:
     int pos{ 0 };
 
@@ -20,12 +20,12 @@ private:
     FilterType fType{ FilterType::None };
 
 public:
-    casc2orderIIR()
+    casc_2o_IIR()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc2orderIIR<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_IIR<M> &otherFilter)
     {
         gain = otherFilter.gain;
         bCoeff = otherFilter.bCoeff;
@@ -34,7 +34,7 @@ public:
     }
 
     template <typename Iter>
-    void Process(Iter begin, Iter end)
+    void process(Iter begin, Iter end)
     {
         constexpr int order{ 2 };
         constexpr int j1{ 1 };
@@ -79,7 +79,7 @@ public:
         mem = y;
     }
 
-    void SetBPCoeff(double f0, double fs, double Q, double gainIn = 1.0)
+    void set_bp_coeff(double f0, double fs, double Q, double gainIn = 1.0)
     {
         gain = gainIn;
         double q2{ 2 * Q };
@@ -137,7 +137,7 @@ public:
         }
     }
 
-    void SetHPCoeff(double f0, double fs, double gainIn = 1.0)
+    void set_hp_coeff(double f0, double fs, double gainIn = 1.0)
     {
         gain = gainIn;
         fType = FilterType::HighPass;
@@ -165,7 +165,7 @@ public:
         }
     }
 
-    void SetLPCoeff(double f0, double fs, double gainIn = 1.0)
+    void set_lp_coeff(double f0, double fs, double gainIn = 1.0)
     {
         gain = gainIn;
         fType = FilterType::LowPass;
@@ -194,7 +194,7 @@ public:
     }
 
     // preload the filter memory for steady state input equal to value parameter
-    void PreloadFilter(double value)
+    void preload_filter(double value)
     {
         double preload_value = value * gain;
         std::array<std::array<double, 3>, M + 1> memVals{ 0 };
@@ -215,7 +215,7 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR {
+class casc_2o_IIR_base {
 protected:
     int pos{ 0 };
 
@@ -264,7 +264,7 @@ protected:
 };
 
 template <size_t M>
-class casc_2o_IIR_lp : casc_2o_IIR<M> {
+class casc_2o_IIR_lp : casc_2o_IIR_base<M> {
 public:
     casc_2o_IIR_lp()
     {
@@ -322,7 +322,7 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR_hp : casc_2o_IIR<M> {
+class casc_2o_IIR_hp : casc_2o_IIR_base<M> {
 public:
     casc_2o_IIR_hp()
     {
@@ -380,7 +380,7 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR_bp : casc_2o_IIR<M> {
+class casc_2o_IIR_bp : casc_2o_IIR_base<M> {
 public:
     casc_2o_IIR_bp()
     {

@@ -34,21 +34,21 @@ TEST_CASE("Filter test")
         std::string path = "../../../test_data/impulse_response";
         for (const auto &entry : std::filesystem::directory_iterator(path)) {
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
-            sdsp::casc2orderIIR<4> df;
+            sdsp::casc_2o_IIR<4> df;
 
             if (fType == sdsp::FilterType::LowPass) {
-                df.SetLPCoeff(f0, fs);
+                df.set_lp_coeff(f0, fs);
             } else if (fType == sdsp::FilterType::HighPass) {
-                df.SetHPCoeff(f0, fs);
+                df.set_hp_coeff(f0, fs);
             } else if (fType == sdsp::FilterType::BandPass) {
-                df.SetBPCoeff(f0, fs, Q);
+                df.set_bp_coeff(f0, fs, Q);
             } else {
                 throw std::runtime_error("Unknown filter type");
             }
-            sdsp::casc2orderIIR<4> df2 = df;
+            sdsp::casc_2o_IIR<4> df2 = df;
             std::vector<double> data(readImpulse.size());
             data.at(0) = 1.0;
-            df.Process(data.begin(), data.end());
+            df.process(data.begin(), data.end());
 
             std::vector<double> error(readImpulse.size());
 
@@ -65,11 +65,11 @@ TEST_CASE("Filter test")
             constexpr unsigned int blockSize{ 32 };
             unsigned int index{ 0 };
             for (index = 0; index <= data2.size() - blockSize; index += blockSize) {
-                df2.Process(std::next(data2.begin(), index), std::next(data2.begin(), index + blockSize));
+                df2.process(std::next(data2.begin(), index), std::next(data2.begin(), index + blockSize));
             }
 
             if (index < data2.size()) {
-                df2.Process(std::next(data2.begin(), index), data2.end());
+                df2.process(std::next(data2.begin(), index), data2.end());
             }
 
             REQUIRE(data == data2);
@@ -86,14 +86,14 @@ TEST_CASE("Filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc2orderIIR<4> df;
-        df.SetLPCoeff(f0, fs);
+        sdsp::casc_2o_IIR<4> df;
+        df.set_lp_coeff(f0, fs);
 
-        sdsp::casc2orderIIR<4> df2;
-        df2.SetLPCoeff(f0, fs, 2.0);
+        sdsp::casc_2o_IIR<4> df2;
+        df2.set_lp_coeff(f0, fs, 2.0);
 
-        df.Process(impulse1.begin(), impulse1.end());
-        df2.Process(impulse2.begin(), impulse2.end());
+        df.process(impulse1.begin(), impulse1.end());
+        df2.process(impulse2.begin(), impulse2.end());
 
         auto times_two = [](double &n) { n = 2.0 * n; };
         std::for_each(impulse1.begin(), impulse1.end(), times_two);
@@ -117,14 +117,14 @@ TEST_CASE("Filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc2orderIIR<4> df;
-        df.SetHPCoeff(f0, fs);
+        sdsp::casc_2o_IIR<4> df;
+        df.set_hp_coeff(f0, fs);
 
-        sdsp::casc2orderIIR<4> df2;
-        df2.SetHPCoeff(f0, fs, 2.0);
+        sdsp::casc_2o_IIR<4> df2;
+        df2.set_hp_coeff(f0, fs, 2.0);
 
-        df.Process(impulse1.begin(), impulse1.end());
-        df2.Process(impulse2.begin(), impulse2.end());
+        df.process(impulse1.begin(), impulse1.end());
+        df2.process(impulse2.begin(), impulse2.end());
 
         auto times_two = [](double &n) { n = 2.0 * n; };
         std::for_each(impulse1.begin(), impulse1.end(), times_two);
@@ -149,14 +149,14 @@ TEST_CASE("Filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc2orderIIR<4> df;
-        df.SetBPCoeff(f0, fs, Q);
+        sdsp::casc_2o_IIR<4> df;
+        df.set_bp_coeff(f0, fs, Q);
 
-        sdsp::casc2orderIIR<4> df2;
-        df2.SetBPCoeff(f0, fs, Q, 2.0);
+        sdsp::casc_2o_IIR<4> df2;
+        df2.set_bp_coeff(f0, fs, Q, 2.0);
 
-        df.Process(impulse1.begin(), impulse1.end());
-        df2.Process(impulse2.begin(), impulse2.end());
+        df.process(impulse1.begin(), impulse1.end());
+        df2.process(impulse2.begin(), impulse2.end());
 
         auto times_two = [](double &n) { n = 2.0 * n; };
         std::for_each(impulse1.begin(), impulse1.end(), times_two);
@@ -180,10 +180,10 @@ TEST_CASE("Filter test")
         {
             std::array<double, 1024> steadyLP;
             steadyLP.fill(steadyValue);
-            sdsp::casc2orderIIR<4> lpFilter;
-            lpFilter.SetLPCoeff(f0, fs);
-            lpFilter.PreloadFilter(steadyValue);
-            lpFilter.Process(steadyLP.begin(), steadyLP.end());
+            sdsp::casc_2o_IIR<4> lpFilter;
+            lpFilter.set_lp_coeff(f0, fs);
+            lpFilter.preload_filter(steadyValue);
+            lpFilter.process(steadyLP.begin(), steadyLP.end());
             auto calcError = [steadyValue](double &n) { n = std::abs(n - steadyValue); };
             std::for_each(steadyLP.begin(), steadyLP.end(), calcError);
             double maxErrorLP = *std::max_element(steadyLP.begin(), steadyLP.end());
@@ -193,10 +193,10 @@ TEST_CASE("Filter test")
         {
             std::array<double, 1024> steadyHP;
             steadyHP.fill(steadyValue);
-            sdsp::casc2orderIIR<4> hpFilter;
-            hpFilter.SetHPCoeff(f0, fs);
-            hpFilter.PreloadFilter(steadyValue);
-            hpFilter.Process(steadyHP.begin(), steadyHP.end());
+            sdsp::casc_2o_IIR<4> hpFilter;
+            hpFilter.set_hp_coeff(f0, fs);
+            hpFilter.preload_filter(steadyValue);
+            hpFilter.process(steadyHP.begin(), steadyHP.end());
             auto calcError = [](double &n) { n = std::abs(n); };
             std::for_each(steadyHP.begin(), steadyHP.end(), calcError);
             double maxErrorHP = *std::max_element(steadyHP.begin(), steadyHP.end());
@@ -206,10 +206,10 @@ TEST_CASE("Filter test")
         {
             std::array<double, 1024> steadyBP;
             steadyBP.fill(steadyValue);
-            sdsp::casc2orderIIR<4> bpFilter;
-            bpFilter.SetBPCoeff(f0, fs, Q);
-            bpFilter.PreloadFilter(steadyValue);
-            bpFilter.Process(steadyBP.begin(), steadyBP.end());
+            sdsp::casc_2o_IIR<4> bpFilter;
+            bpFilter.set_bp_coeff(f0, fs, Q);
+            bpFilter.preload_filter(steadyValue);
+            bpFilter.process(steadyBP.begin(), steadyBP.end());
             auto calcError = [](double &n) { n = std::abs(n); };
             std::for_each(steadyBP.begin(), steadyBP.end(), calcError);
             double maxErrorBP = *std::max_element(steadyBP.begin(), steadyBP.end());
@@ -470,8 +470,8 @@ TEST_CASE("Filter benchmarks")
         constexpr double f0{ 10e3 };
         // constexpr double Q {1.1};
 
-        sdsp::casc2orderIIR<4> df;
-        df.SetLPCoeff(f0, fs);
+        sdsp::casc_2o_IIR<4> df;
+        df.set_lp_coeff(f0, fs);
 
         sdsp::casc_2o_IIR_lp<4> df2;
         df2.set_coeff(f0, fs);
@@ -482,7 +482,7 @@ TEST_CASE("Filter benchmarks")
         BENCHMARK("Runtime configurable LP filter benchmark")
         {
             std::array<double, 4096> data2 = data;
-            df.Process(data2.begin(), data2.end());
+            df.process(data2.begin(), data2.end());
             return data2;
         };
 
@@ -501,8 +501,8 @@ TEST_CASE("Filter benchmarks")
         constexpr double f0{ 10e3 };
         // constexpr double Q {1.1};
 
-        sdsp::casc2orderIIR<4> df;
-        df.SetHPCoeff(f0, fs);
+        sdsp::casc_2o_IIR<4> df;
+        df.set_hp_coeff(f0, fs);
 
         sdsp::casc_2o_IIR_hp<4> df2;
         df2.set_coeff(f0, fs);
@@ -513,7 +513,7 @@ TEST_CASE("Filter benchmarks")
         BENCHMARK("Runtime configurable HP filter benchmark")
         {
             std::array<double, 4096> data2 = data;
-            df.Process(data2.begin(), data2.end());
+            df.process(data2.begin(), data2.end());
             return data2;
         };
 
@@ -532,8 +532,8 @@ TEST_CASE("Filter benchmarks")
         constexpr double f0{ 10e3 };
         constexpr double Q{ 1.1 };
 
-        sdsp::casc2orderIIR<4> df;
-        df.SetBPCoeff(f0, fs, Q);
+        sdsp::casc_2o_IIR<4> df;
+        df.set_bp_coeff(f0, fs, Q);
 
         sdsp::casc_2o_IIR_bp<4> df2;
         df2.set_coeff(f0, fs, Q);
@@ -544,7 +544,7 @@ TEST_CASE("Filter benchmarks")
         BENCHMARK("Runtime configurable BP filter benchmark")
         {
             std::array<double, 4096> data2 = data;
-            df.Process(data2.begin(), data2.end());
+            df.process(data2.begin(), data2.end());
             return data2;
         };
 

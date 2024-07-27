@@ -232,7 +232,7 @@ TEST_CASE("LP compile time filter test")
             sdsp::casc_2o_IIR_lp<4> df;
 
             if (fType == sdsp::FilterType::LowPass) {
-                df.set_coeff(f0, fs);
+                df.set_lp_coeff(f0, fs);
             } else {
                 throw std::runtime_error("Unknown filter type");
             }
@@ -278,10 +278,10 @@ TEST_CASE("LP compile time filter test")
         impulse2.at(0) = 1.0;
 
         sdsp::casc_2o_IIR_lp<4> df;
-        df.set_coeff(f0, fs);
+        df.set_lp_coeff(f0, fs);
 
         sdsp::casc_2o_IIR_lp<4> df2;
-        df2.set_coeff(f0, fs, 2.0);
+        df2.set_lp_coeff(f0, fs, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
         df2.process(impulse2.begin(), impulse2.end());
@@ -313,7 +313,7 @@ TEST_CASE("HP compile time filter test")
             sdsp::casc_2o_IIR_hp<4> df;
 
             if (fType == sdsp::FilterType::HighPass) {
-                df.set_coeff(f0, fs);
+                df.set_hp_coeff(f0, fs);
             } else {
                 throw std::runtime_error("Unknown filter type");
             }
@@ -359,10 +359,10 @@ TEST_CASE("HP compile time filter test")
         impulse2.at(0) = 1.0;
 
         sdsp::casc_2o_IIR_hp<4> df;
-        df.set_coeff(f0, fs);
+        df.set_hp_coeff(f0, fs);
 
         sdsp::casc_2o_IIR_hp<4> df2;
-        df2.set_coeff(f0, fs, 2.0);
+        df2.set_hp_coeff(f0, fs, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
         df2.process(impulse2.begin(), impulse2.end());
@@ -394,7 +394,7 @@ TEST_CASE("BP compile time filter test")
             sdsp::casc_2o_IIR_bp<4> df;
 
             if (fType == sdsp::FilterType::BandPass) {
-                df.set_coeff(f0, fs, Q);
+                df.set_bp_coeff(f0, fs, Q);
             } else {
                 throw std::runtime_error("Unknown filter type");
             }
@@ -441,10 +441,10 @@ TEST_CASE("BP compile time filter test")
         impulse2.at(0) = 1.0;
 
         sdsp::casc_2o_IIR_bp<4> df;
-        df.set_coeff(f0, fs, Q);
+        df.set_bp_coeff(f0, fs, Q);
 
         sdsp::casc_2o_IIR_bp<4> df2;
-        df2.set_coeff(f0, fs, Q, 2.0);
+        df2.set_bp_coeff(f0, fs, Q, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
         df2.process(impulse2.begin(), impulse2.end());
@@ -474,7 +474,7 @@ TEST_CASE("Filter benchmarks")
         df.set_lp_coeff(f0, fs);
 
         sdsp::casc_2o_IIR_lp<4> df2;
-        df2.set_coeff(f0, fs);
+        df2.set_lp_coeff(f0, fs);
 
         std::array<double, 4096> data{ 0.0 };
         data.at(0) = 1.0;
@@ -505,7 +505,7 @@ TEST_CASE("Filter benchmarks")
         df.set_hp_coeff(f0, fs);
 
         sdsp::casc_2o_IIR_hp<4> df2;
-        df2.set_coeff(f0, fs);
+        df2.set_hp_coeff(f0, fs);
 
         std::array<double, 4096> data{ 0.0 };
         data.at(0) = 1.0;
@@ -536,7 +536,7 @@ TEST_CASE("Filter benchmarks")
         df.set_bp_coeff(f0, fs, Q);
 
         sdsp::casc_2o_IIR_bp<4> df2;
-        df2.set_coeff(f0, fs, Q);
+        df2.set_bp_coeff(f0, fs, Q);
 
         std::array<double, 4096> data{ 0.0 };
         data.at(0) = 1.0;

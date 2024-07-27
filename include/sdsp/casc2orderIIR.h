@@ -294,7 +294,7 @@ public:
         }
     }
 
-    void set_coeff(double f0, double fs, double gainIn = 1.0)
+    void set_lp_coeff(double f0, double fs, double gainIn = 1.0)
     {
         this->gain = gainIn;
 
@@ -352,7 +352,7 @@ public:
         }
     }
 
-    void set_coeff(double f0, double fs, double gainIn = 1.0)
+    void set_hp_coeff(double f0, double fs, double gainIn = 1.0)
     {
         this->gain = gainIn;
 
@@ -410,7 +410,7 @@ public:
         }
     }
 
-    void set_coeff(double f0, double fs, double Q, double gainIn = 1.0)
+    void set_bp_coeff(double f0, double fs, double Q, double gainIn = 1.0)
     {
         double q2{ 2 * Q };
         this->gain = gainIn;

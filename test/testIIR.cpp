@@ -1,6 +1,6 @@
 
 #include "catch2/catch_all.hpp"
-#include "sdsp/casc2orderIIR.h"
+#include "sdsp/casc_2o_iir.h"
 #include <filesystem>
 #include <fstream>
 
@@ -34,7 +34,7 @@ TEST_CASE("Filter test")
         std::string path = "../../../test_data/impulse_response";
         for (const auto &entry : std::filesystem::directory_iterator(path)) {
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
-            sdsp::casc_2o_IIR<4> df;
+            sdsp::casc_2o_iir<4> df;
 
             if (fType == sdsp::filter_type::low_pass) {
                 df.set_lp_coeff(f0, fs);
@@ -45,7 +45,7 @@ TEST_CASE("Filter test")
             } else {
                 throw std::runtime_error("Unknown filter type");
             }
-            sdsp::casc_2o_IIR<4> df2 = df;
+            sdsp::casc_2o_iir<4> df2 = df;
             std::vector<double> data(readImpulse.size());
             data.at(0) = 1.0;
             df.process(data.begin(), data.end());
@@ -86,10 +86,10 @@ TEST_CASE("Filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc_2o_IIR<4> df;
+        sdsp::casc_2o_iir<4> df;
         df.set_lp_coeff(f0, fs);
 
-        sdsp::casc_2o_IIR<4> df2;
+        sdsp::casc_2o_iir<4> df2;
         df2.set_lp_coeff(f0, fs, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
@@ -117,10 +117,10 @@ TEST_CASE("Filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc_2o_IIR<4> df;
+        sdsp::casc_2o_iir<4> df;
         df.set_hp_coeff(f0, fs);
 
-        sdsp::casc_2o_IIR<4> df2;
+        sdsp::casc_2o_iir<4> df2;
         df2.set_hp_coeff(f0, fs, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
@@ -149,10 +149,10 @@ TEST_CASE("Filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc_2o_IIR<4> df;
+        sdsp::casc_2o_iir<4> df;
         df.set_bp_coeff(f0, fs, Q);
 
-        sdsp::casc_2o_IIR<4> df2;
+        sdsp::casc_2o_iir<4> df2;
         df2.set_bp_coeff(f0, fs, Q, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
@@ -180,7 +180,7 @@ TEST_CASE("Filter test")
         {
             std::array<double, 1024> steadyLP;
             steadyLP.fill(steadyValue);
-            sdsp::casc_2o_IIR<4> lpFilter;
+            sdsp::casc_2o_iir<4> lpFilter;
             lpFilter.set_lp_coeff(f0, fs);
             lpFilter.preload_filter(steadyValue);
             lpFilter.process(steadyLP.begin(), steadyLP.end());
@@ -193,7 +193,7 @@ TEST_CASE("Filter test")
         {
             std::array<double, 1024> steadyHP;
             steadyHP.fill(steadyValue);
-            sdsp::casc_2o_IIR<4> hpFilter;
+            sdsp::casc_2o_iir<4> hpFilter;
             hpFilter.set_hp_coeff(f0, fs);
             hpFilter.preload_filter(steadyValue);
             hpFilter.process(steadyHP.begin(), steadyHP.end());
@@ -206,7 +206,7 @@ TEST_CASE("Filter test")
         {
             std::array<double, 1024> steadyBP;
             steadyBP.fill(steadyValue);
-            sdsp::casc_2o_IIR<4> bpFilter;
+            sdsp::casc_2o_iir<4> bpFilter;
             bpFilter.set_bp_coeff(f0, fs, Q);
             bpFilter.preload_filter(steadyValue);
             bpFilter.process(steadyBP.begin(), steadyBP.end());
@@ -229,14 +229,14 @@ TEST_CASE("LP compile time filter test")
                 continue;
 
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
-            sdsp::casc_2o_IIR_lp<4> df;
+            sdsp::casc_2o_iir_lp<4> df;
 
             if (fType == sdsp::filter_type::low_pass) {
                 df.set_lp_coeff(f0, fs);
             } else {
                 throw std::runtime_error("Unknown filter type");
             }
-            sdsp::casc_2o_IIR_lp<4> df2 = df;
+            sdsp::casc_2o_iir_lp<4> df2 = df;
             std::vector<double> data(readImpulse.size());
             data.at(0) = 1.0;
             df.process(data.begin(), data.end());
@@ -277,10 +277,10 @@ TEST_CASE("LP compile time filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc_2o_IIR_lp<4> df;
+        sdsp::casc_2o_iir_lp<4> df;
         df.set_lp_coeff(f0, fs);
 
-        sdsp::casc_2o_IIR_lp<4> df2;
+        sdsp::casc_2o_iir_lp<4> df2;
         df2.set_lp_coeff(f0, fs, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
@@ -310,14 +310,14 @@ TEST_CASE("HP compile time filter test")
                 continue;
 
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
-            sdsp::casc_2o_IIR_hp<4> df;
+            sdsp::casc_2o_iir_hp<4> df;
 
             if (fType == sdsp::filter_type::high_pass) {
                 df.set_hp_coeff(f0, fs);
             } else {
                 throw std::runtime_error("Unknown filter type");
             }
-            sdsp::casc_2o_IIR_hp<4> df2 = df;
+            sdsp::casc_2o_iir_hp<4> df2 = df;
             std::vector<double> data(readImpulse.size());
             data.at(0) = 1.0;
             df.process(data.begin(), data.end());
@@ -358,10 +358,10 @@ TEST_CASE("HP compile time filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc_2o_IIR_hp<4> df;
+        sdsp::casc_2o_iir_hp<4> df;
         df.set_hp_coeff(f0, fs);
 
-        sdsp::casc_2o_IIR_hp<4> df2;
+        sdsp::casc_2o_iir_hp<4> df2;
         df2.set_hp_coeff(f0, fs, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
@@ -391,14 +391,14 @@ TEST_CASE("BP compile time filter test")
                 continue;
 
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
-            sdsp::casc_2o_IIR_bp<4> df;
+            sdsp::casc_2o_iir_bp<4> df;
 
             if (fType == sdsp::filter_type::band_pass) {
                 df.set_bp_coeff(f0, fs, Q);
             } else {
                 throw std::runtime_error("Unknown filter type");
             }
-            sdsp::casc_2o_IIR_bp<4> df2 = df;
+            sdsp::casc_2o_iir_bp<4> df2 = df;
             std::vector<double> data(readImpulse.size());
             data.at(0) = 1.0;
             df.process(data.begin(), data.end());
@@ -440,10 +440,10 @@ TEST_CASE("BP compile time filter test")
         std::array<double, 1024> impulse2{ 0 };
         impulse2.at(0) = 1.0;
 
-        sdsp::casc_2o_IIR_bp<4> df;
+        sdsp::casc_2o_iir_bp<4> df;
         df.set_bp_coeff(f0, fs, Q);
 
-        sdsp::casc_2o_IIR_bp<4> df2;
+        sdsp::casc_2o_iir_bp<4> df2;
         df2.set_bp_coeff(f0, fs, Q, 2.0);
 
         df.process(impulse1.begin(), impulse1.end());
@@ -470,10 +470,10 @@ TEST_CASE("Filter benchmarks")
         constexpr double f0{ 10e3 };
         // constexpr double Q {1.1};
 
-        sdsp::casc_2o_IIR<4> df;
+        sdsp::casc_2o_iir<4> df;
         df.set_lp_coeff(f0, fs);
 
-        sdsp::casc_2o_IIR_lp<4> df2;
+        sdsp::casc_2o_iir_lp<4> df2;
         df2.set_lp_coeff(f0, fs);
 
         std::array<double, 4096> data{ 0.0 };
@@ -501,10 +501,10 @@ TEST_CASE("Filter benchmarks")
         constexpr double f0{ 10e3 };
         // constexpr double Q {1.1};
 
-        sdsp::casc_2o_IIR<4> df;
+        sdsp::casc_2o_iir<4> df;
         df.set_hp_coeff(f0, fs);
 
-        sdsp::casc_2o_IIR_hp<4> df2;
+        sdsp::casc_2o_iir_hp<4> df2;
         df2.set_hp_coeff(f0, fs);
 
         std::array<double, 4096> data{ 0.0 };
@@ -532,10 +532,10 @@ TEST_CASE("Filter benchmarks")
         constexpr double f0{ 10e3 };
         constexpr double Q{ 1.1 };
 
-        sdsp::casc_2o_IIR<4> df;
+        sdsp::casc_2o_iir<4> df;
         df.set_bp_coeff(f0, fs, Q);
 
-        sdsp::casc_2o_IIR_bp<4> df2;
+        sdsp::casc_2o_iir_bp<4> df2;
         df2.set_bp_coeff(f0, fs, Q);
 
         std::array<double, 4096> data{ 0.0 };

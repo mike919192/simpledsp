@@ -6,7 +6,7 @@
 namespace sdsp
 {
 template <size_t M>
-class casc_2o_IIR {
+class casc_2o_iir {
 private:
     int pos{ 0 };
 
@@ -20,12 +20,12 @@ private:
     filter_type fType{ filter_type::none };
 
 public:
-    casc_2o_IIR()
+    casc_2o_iir()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc_2o_IIR<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_iir<M> &otherFilter)
     {
         gain = otherFilter.gain;
         bCoeff = otherFilter.bCoeff;
@@ -215,7 +215,7 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR_base {
+class casc_2o_iir_base {
 protected:
     int pos{ 0 };
 
@@ -264,14 +264,14 @@ protected:
 };
 
 template <size_t M>
-class casc_2o_IIR_lp : casc_2o_IIR_base<M> {
+class casc_2o_iir_lp : casc_2o_iir_base<M> {
 public:
-    casc_2o_IIR_lp()
+    casc_2o_iir_lp()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc_2o_IIR_lp<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_iir_lp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;
@@ -280,7 +280,7 @@ public:
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
-        this->template process_base<casc_2o_IIR_lp<M>>(begin, end);
+        this->template process_base<casc_2o_iir_lp<M>>(begin, end);
     }
 
     static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,
@@ -322,14 +322,14 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR_hp : casc_2o_IIR_base<M> {
+class casc_2o_iir_hp : casc_2o_iir_base<M> {
 public:
-    casc_2o_IIR_hp()
+    casc_2o_iir_hp()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc_2o_IIR_hp<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_iir_hp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;
@@ -338,7 +338,7 @@ public:
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
-        this->template process_base<casc_2o_IIR_hp<M>>(begin, end);
+        this->template process_base<casc_2o_iir_hp<M>>(begin, end);
     }
 
     static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,
@@ -380,14 +380,14 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR_bp : casc_2o_IIR_base<M> {
+class casc_2o_iir_bp : casc_2o_iir_base<M> {
 public:
-    casc_2o_IIR_bp()
+    casc_2o_iir_bp()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc_2o_IIR_bp<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_iir_bp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;
@@ -396,7 +396,7 @@ public:
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
-        this->template process_base<casc_2o_IIR_bp<M>>(begin, end);
+        this->template process_base<casc_2o_iir_bp<M>>(begin, end);
     }
 
     static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,

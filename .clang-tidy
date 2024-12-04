@@ -30,7 +30,7 @@ Checks: "clang-diagnostic-*,
          -hicpp-braces-around-statements,
          -llvmlibc-callee-namespace,
          -llvmlibc-implementation-in-namespace,
-         -llvmlibc-inline-function-decl
+         -llvmlibc-inline-function-decl,
          -llvmlibc-restrict-system-libc-headers,
          -llvm-header-guard,
          -llvm-namespace-comment,

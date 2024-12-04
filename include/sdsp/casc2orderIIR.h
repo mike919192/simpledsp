@@ -1,5 +1,5 @@
 #pragma once
-#include "FilterType.h"
+#include "filter_type.h"
 #include <array>
 #include <cmath>
 
@@ -17,7 +17,7 @@ private:
     std::array<std::array<double, 3>, M> bCoeff{ 0 };
     std::array<std::array<double, 3>, M> aCoeff{ 0 };
 
-    FilterType fType{ FilterType::None };
+    filter_type fType{ filter_type::none };
 
 public:
     casc_2o_IIR()
@@ -83,7 +83,7 @@ public:
     {
         gain = gainIn;
         double q2{ 2 * Q };
-        fType = FilterType::BandPass;
+        fType = filter_type::band_pass;
 
         double e0{ 2 * M_PI * f0 / fs };
         double dnm{ std::sin(e0) };
@@ -140,7 +140,7 @@ public:
     void set_hp_coeff(double f0, double fs, double gainIn = 1.0)
     {
         gain = gainIn;
-        fType = FilterType::HighPass;
+        fType = filter_type::high_pass;
 
         double e0{ 2 * M_PI * f0 / fs };
         for (unsigned int k = 0; k < M; k++) {
@@ -168,7 +168,7 @@ public:
     void set_lp_coeff(double f0, double fs, double gainIn = 1.0)
     {
         gain = gainIn;
-        fType = FilterType::LowPass;
+        fType = filter_type::low_pass;
 
         double e0{ 2 * M_PI * f0 / fs };
         for (unsigned int k = 0; k < M; k++) {
@@ -201,7 +201,7 @@ public:
         for (int i = 0; i < 3; i++) {
             memVals.at(0).at(i) = preload_value;
         }
-        if (fType == FilterType::LowPass) {
+        if (fType == filter_type::low_pass) {
             for (uint j = 1; j < M + 1; j++) {
                 preload_value /= 1 + aCoeff.at(j - 1).at(1) + aCoeff.at(j - 1).at(2);
                 preload_value *= bCoeff.at(j - 1).at(0) + bCoeff.at(j - 1).at(1) + bCoeff.at(j - 1).at(2);

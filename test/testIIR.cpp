@@ -4,19 +4,19 @@
 #include <filesystem>
 #include <fstream>
 
-std::tuple<std::vector<double>, sdsp::FilterType, double, double, double> csvreadImpulse2(const std::string &filename)
+std::tuple<std::vector<double>, sdsp::filter_type, double, double, double> csvreadImpulse2(const std::string &filename)
 {
     std::ifstream myfile;
     myfile.open(filename);
     unsigned int fType{ 0 };
     char comma{ 0 };
     unsigned int n{ 0 };
-    sdsp::FilterType fType_out{ sdsp::FilterType::None };
+    sdsp::filter_type fType_out{ sdsp::filter_type::none };
     double fs_out{ 0.0 };
     double f0_out{ 0.0 };
     double Q_out{ 0.0 };
     myfile >> fType >> comma >> fs_out >> comma >> f0_out >> comma >> Q_out >> comma >> n >> comma;
-    fType_out = static_cast<sdsp::FilterType>(fType);
+    fType_out = static_cast<sdsp::filter_type>(fType);
 
     std::vector<double> impulse(n);
 
@@ -36,11 +36,11 @@ TEST_CASE("Filter test")
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
             sdsp::casc_2o_IIR<4> df;
 
-            if (fType == sdsp::FilterType::LowPass) {
+            if (fType == sdsp::filter_type::low_pass) {
                 df.set_lp_coeff(f0, fs);
-            } else if (fType == sdsp::FilterType::HighPass) {
+            } else if (fType == sdsp::filter_type::high_pass) {
                 df.set_hp_coeff(f0, fs);
-            } else if (fType == sdsp::FilterType::BandPass) {
+            } else if (fType == sdsp::filter_type::band_pass) {
                 df.set_bp_coeff(f0, fs, Q);
             } else {
                 throw std::runtime_error("Unknown filter type");
@@ -231,7 +231,7 @@ TEST_CASE("LP compile time filter test")
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
             sdsp::casc_2o_IIR_lp<4> df;
 
-            if (fType == sdsp::FilterType::LowPass) {
+            if (fType == sdsp::filter_type::low_pass) {
                 df.set_lp_coeff(f0, fs);
             } else {
                 throw std::runtime_error("Unknown filter type");
@@ -312,7 +312,7 @@ TEST_CASE("HP compile time filter test")
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
             sdsp::casc_2o_IIR_hp<4> df;
 
-            if (fType == sdsp::FilterType::HighPass) {
+            if (fType == sdsp::filter_type::high_pass) {
                 df.set_hp_coeff(f0, fs);
             } else {
                 throw std::runtime_error("Unknown filter type");
@@ -393,7 +393,7 @@ TEST_CASE("BP compile time filter test")
             auto [readImpulse, fType, fs, f0, Q] = csvreadImpulse2(entry.path().string());
             sdsp::casc_2o_IIR_bp<4> df;
 
-            if (fType == sdsp::FilterType::BandPass) {
+            if (fType == sdsp::filter_type::band_pass) {
                 df.set_bp_coeff(f0, fs, Q);
             } else {
                 throw std::runtime_error("Unknown filter type");

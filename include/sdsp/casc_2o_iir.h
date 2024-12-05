@@ -1,12 +1,12 @@
 #pragma once
-#include "FilterType.h"
+#include "filter_type.h"
 #include <array>
 #include <cmath>
 
 namespace sdsp
 {
 template <size_t M>
-class casc_2o_IIR {
+class casc_2o_iir {
 private:
     int pos{ 0 };
 
@@ -17,15 +17,15 @@ private:
     std::array<std::array<double, 3>, M> bCoeff{ 0 };
     std::array<std::array<double, 3>, M> aCoeff{ 0 };
 
-    FilterType fType{ FilterType::None };
+    filter_type fType{ filter_type::none };
 
 public:
-    casc_2o_IIR()
+    casc_2o_iir()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc_2o_IIR<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_iir<M> &otherFilter)
     {
         gain = otherFilter.gain;
         bCoeff = otherFilter.bCoeff;
@@ -83,7 +83,7 @@ public:
     {
         gain = gainIn;
         double q2{ 2 * Q };
-        fType = FilterType::BandPass;
+        fType = filter_type::band_pass;
 
         double e0{ 2 * M_PI * f0 / fs };
         double dnm{ std::sin(e0) };
@@ -140,7 +140,7 @@ public:
     void set_hp_coeff(double f0, double fs, double gainIn = 1.0)
     {
         gain = gainIn;
-        fType = FilterType::HighPass;
+        fType = filter_type::high_pass;
 
         double e0{ 2 * M_PI * f0 / fs };
         for (unsigned int k = 0; k < M; k++) {
@@ -168,7 +168,7 @@ public:
     void set_lp_coeff(double f0, double fs, double gainIn = 1.0)
     {
         gain = gainIn;
-        fType = FilterType::LowPass;
+        fType = filter_type::low_pass;
 
         double e0{ 2 * M_PI * f0 / fs };
         for (unsigned int k = 0; k < M; k++) {
@@ -201,7 +201,7 @@ public:
         for (int i = 0; i < 3; i++) {
             memVals.at(0).at(i) = preload_value;
         }
-        if (fType == FilterType::LowPass) {
+        if (fType == filter_type::low_pass) {
             for (uint j = 1; j < M + 1; j++) {
                 preload_value /= 1 + aCoeff.at(j - 1).at(1) + aCoeff.at(j - 1).at(2);
                 preload_value *= bCoeff.at(j - 1).at(0) + bCoeff.at(j - 1).at(1) + bCoeff.at(j - 1).at(2);
@@ -215,7 +215,7 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR_base {
+class casc_2o_iir_base {
 protected:
     int pos{ 0 };
 
@@ -264,14 +264,14 @@ protected:
 };
 
 template <size_t M>
-class casc_2o_IIR_lp : casc_2o_IIR_base<M> {
+class casc_2o_iir_lp : casc_2o_iir_base<M> {
 public:
-    casc_2o_IIR_lp()
+    casc_2o_iir_lp()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc_2o_IIR_lp<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_iir_lp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;
@@ -280,7 +280,7 @@ public:
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
-        this->template process_base<casc_2o_IIR_lp<M>>(begin, end);
+        this->template process_base<casc_2o_iir_lp<M>>(begin, end);
     }
 
     static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,
@@ -322,14 +322,14 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR_hp : casc_2o_IIR_base<M> {
+class casc_2o_iir_hp : casc_2o_iir_base<M> {
 public:
-    casc_2o_IIR_hp()
+    casc_2o_iir_hp()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc_2o_IIR_hp<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_iir_hp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;
@@ -338,7 +338,7 @@ public:
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
-        this->template process_base<casc_2o_IIR_hp<M>>(begin, end);
+        this->template process_base<casc_2o_iir_hp<M>>(begin, end);
     }
 
     static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,
@@ -380,14 +380,14 @@ public:
 };
 
 template <size_t M>
-class casc_2o_IIR_bp : casc_2o_IIR_base<M> {
+class casc_2o_iir_bp : casc_2o_iir_base<M> {
 public:
-    casc_2o_IIR_bp()
+    casc_2o_iir_bp()
     {
         static_assert(M % 2 == 0, "M must be even!");
     }
 
-    void copy_coeff_from(const casc_2o_IIR_bp<M> &otherFilter)
+    void copy_coeff_from(const casc_2o_iir_bp<M> &otherFilter)
     {
         this->gain = otherFilter.gain;
         this->aCoeff = otherFilter.aCoeff;
@@ -396,7 +396,7 @@ public:
     template <typename Iter>
     void process(Iter begin, Iter end)
     {
-        this->template process_base<casc_2o_IIR_bp<M>>(begin, end);
+        this->template process_base<casc_2o_iir_bp<M>>(begin, end);
     }
 
     static void process_spec(std::array<std::array<double, 3>, M + 1> &y, const std::array<std::array<double, 3>, M> &a,

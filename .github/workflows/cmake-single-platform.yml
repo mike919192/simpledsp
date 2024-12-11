@@ -37,7 +37,7 @@ jobs:
 
     - name: Install Conan
       run: |
-        sudo pip install conan --break-system-packages
+        pip install conan
 
     - name: Create profile
       run: conan profile detect --force
